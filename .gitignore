@@ -1,0 +1,7 @@
+*.log
+*.sqlite3
+/pkg/*
+.bundle
+coverage/*
+spec/database.yml
+.DS_Store

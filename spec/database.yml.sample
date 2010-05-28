@@ -1,0 +1,10 @@
+sqlite3:
+  adapter: sqlite3
+  database: make_exportable.sqlite3
+
+mysql:
+  adapter: mysql
+  hostname: localhost
+  username: root
+  password:
+  database: make_exportable

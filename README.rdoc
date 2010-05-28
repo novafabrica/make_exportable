@@ -1,0 +1,140 @@
+MakeExportable
+======================
+MakeExportable is a Rails gem/plugin that makes exporting your model's data effortless. It works in a variety of formats and can filter down what gets exported using ActiveRecord's find method.
+
+Supported Formats 
+-----------------
+At the moment MakeExportable supports
+
+* CSV: Comma-separated values
+* TSV: Tab-seperated values
+* XLS: Excel Spreadsheet
+* XML: Extensible markup language
+* HTML: Hypertext markup language
+	
+INSTALLATION
+-------------
+	script/plugin install git@github.com:novafabrica/make_exportable.git
+
+Usage
+-----
+
+To start using MakeExportable simply add a call to **make\_exportable** in any class you want to use for exporting data.
+
+	class Customer < ActiveRecord::Base
+		make_exportable 
+	end
+
+This includes the MakeExportable module in your class and gives your class access to MakeExportable's methods. 
+
+You can specify which formats you want to use in your class using the **@@exportable_formats** class variable.
+
+	class Customer < ActiveRecord::Base
+		make_exportable
+		@@exportable_formats = [:csv, xml]
+	end
+
+To export your model's data you can simply call the class method **to\_export**.
+
+	Customer.to_export("csv", ['first_name', 'last_name'])
+
+**to\_export** returns an array containing the data in CSV format and the appropriate mime-type for easy file sending.
+
+You can easily switch the format by substituting 'csv' for your desired format. 
+
+	Customer.to_export("xml", ['first_name', 'last_name'])
+
+**to\_export** also allows you to send conditions and order to the class. 
+
+	Customer.to_export("xml", ['first_name', 'last_name']), :conditions => {:last_name => "smith"}, :order => "DESC"
+
+MakeExportable doesn't just export database columns. It can also export data returned from methods.
+
+	class Customer < ActiveRecord::Base
+		make_exportable 
+		
+		def full_name
+			"#{first_name} #{last_name}"
+		end
+		
+	end
+
+	Customer.to_export("csv", ['full_name'])
+
+If you want an attribute to be handled differently when exported, you can define a method with the syntax **attribute\_export** which will be called when exporting instead of the regular attribute.
+
+	class Customer < ActiveRecord::Base
+		make_exportable 
+		
+		def first_name_export
+			first_name.capitalize
+		end
+		
+	end
+
+
+If you just have some data (such as an array or hash) you want to export, MakeExportable can do that also with the **create\_report\_for** method
+
+	Customer.create_report_for([headers], [[row1], [row2], [row3]], "csv")
+
+Just send the format, the column headers and an ordered array of rows.
+
+
+Additional Methods
+------------------
+
+If you have a general conditions and an order you will be calling in multiple methods you can attach them to the **make\_exportable** method when including it into your class
+
+	class Customer < ActiveRecord::Base
+		make_exportable :conditions => {:active => true}, :order => 'last_name ASC'
+	end
+
+For ease of use MakeExportable dynamically adds a few useful methods. Each export format gets three "magic methods".
+
+**to\_format\_report**, where "format" is the export format (as in "to_csv_report"), which calls **to\_export(format)**.
+
+**create\_format\_for** (and **create\_format\_report\_for**), where "format" is the export format (as in "create_csv_for"/"create_csv_report_for"), which calls **create\_report\_for(format)**.
+
+
+Example
+-------
+
+	class CustomerController < ApplicationController
+	
+		def export
+			format = 'csv'
+			columns = ['first_name', 'last_name', 'city', 'state', 'email']
+			options = {:conditions => "active = 1"}
+			export_data, data_type = Customer.to_export(format, columns, options)
+			
+			# Send data to user as file
+			file_name = "customer_export.#{format}"
+			send_data(export_data, :type => data_type, :disposition => 'attachment', 
+										:filename => file_name )
+		end
+	
+	end
+
+
+INFO
+========
+<table>
+<tr><td>Author:</td><td>Kevin Skoglund, Nova Fabrica, Inc.
+</td></tr>
+<tr><td>License:</td><td>Copyright 2009 by Kevin Skoglund. released under the attached MIT-LICENSE. See the LICENSE file included in the distribution.
+</td></tr>
+<tr><td>GitHub:</td><td><a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
+</td></tr>
+</table>
+
+CONTRIBUTORS
+-------------
+Matthew Bergman
+
+BUG REPORTS & FEEDBACK
+----------------------
+Bug reports and feedback are welcomed at info@novafabrica.com
+
+Warranty
+--------
+This software is provided "as is" and without any express or implied warranties, including, without limitation, the implied warranties of merchantability and fitness for a particular purpose.
