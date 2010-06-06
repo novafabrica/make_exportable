@@ -161,28 +161,28 @@ describe "Make Exportable" do
           context "with explicit columns given" do
 
             it "should export the columns as csv" do
-              User.to_export( "csv", [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
+              User.to_export( "csv", :columns => [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
             end
 
             it "should export the columns as xls" do
-              User.to_export( "xls", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
+              User.to_export( "xls", :columns =>  [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
             end
 
             it "should export the columns as tsv" do
-              User.to_export( "tsv", [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
+              User.to_export( "tsv", :columns => [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
             end
 
             it "should export the columns as html" do
-              User.to_export( "html", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
+              User.to_export( "html", :columns => [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
             end
 
             it "should export the columns as xml" do
-              User.to_export( "xml", [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
+              User.to_export( "xml", :columns => [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
             end
 
             #We really could test this one forever.
             it "should export the columns designated by the options given" do
-              User.to_export( "csv", [:first_name, "is_admin"], :conditions => {:first_name => "user_1"}).should == ["First Name,Is Admin\nuser_1,false\n", "text/csv; charset=utf-8; header=present"]
+              User.to_export( "csv", :columns => [:first_name, "is_admin"], :finder_options => { :conditions => {:first_name => "user_1"}}).should == ["First Name,Is Admin\nuser_1,false\n", "text/csv; charset=utf-8; header=present"]
             end
 
           end
@@ -211,7 +211,7 @@ describe "Make Exportable" do
 
             #We really could test this one forever.
             it "should export the columns designated by the options given" do
-              User.to_export( "csv", [], :conditions => {:first_name => "user_1"}).should == ["Id,First Name,Last Name,Email,Is Admin,Created At,Updated At\n27,user_1,Doe,\"\",false,2001-02-03 00:00:00 -0500,2001-02-03 00:00:00 -0500\n", "text/csv; charset=utf-8; header=present"]
+              User.to_export( "csv", :finder_options => {:conditions => {:first_name => "user_1"}}).should == ["Id,First Name,Last Name,Email,Is Admin,Created At,Updated At\n27,user_1,Doe,\"\",false,2001-02-03 00:00:00 -0500,2001-02-03 00:00:00 -0500\n", "text/csv; charset=utf-8; header=present"]
             end
           end
 
@@ -226,11 +226,19 @@ describe "Make Exportable" do
           it "should chainable on named_scopes" do
             User.a_limiter.get_export_data([:first_name, :last_name]).should == [["user_1", "Doe"]]
           end
+          
+          it "should allow a scope to be sent" do
+            User.get_export_data([:first_name, :last_name], :scopes => ['a_limiter']).should == [["user_1", "Doe"]]
+          end
+          
+           it "should allow multiple scopes to be sent" do
+              User.get_export_data([:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["user_2", "Doe"]]
+            end
 
           it "should create order array of arrays of ordered column data by the options given" do
-            User.get_export_data([:first_name, :last_name], :order => " ID DESC").should == [["user_2", "Doe"], ["user_1", "Doe"]]
+            User.get_export_data([:first_name, :last_name], :finder_options => {:order => " ID DESC"}).should == [["user_2", "Doe"], ["user_1", "Doe"]]
 
-            User.get_export_data([:first_name, :last_name], :conditions => {:first_name => "user_1"}).should == [["user_1", "Doe"]]
+            User.get_export_data([:first_name, :last_name],  :finder_options => {:conditions => {:first_name => "user_1"}}).should == [["user_1", "Doe"]]
           end
 
         end

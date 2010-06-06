@@ -21,8 +21,10 @@ class User < ActiveRecord::Base
 
   if ActiveRecord::VERSION::MAJOR >= 3
     scope :a_limiter, :limit => 1
+    scope :order_by, :order => "ID DESC"    
   else
     named_scope :a_limiter, :limit => 1 
+    named_scope :order_by, :order => "ID DESC"    
   end
 
 end

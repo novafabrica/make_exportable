@@ -111,7 +111,7 @@ module NovaFabrica #:nodoc:
           end
           extend NovaFabrica::MakeExportable::ClassMethods
           include NovaFabrica::MakeExportable::InstanceMethods
-          write_inheritable_attribute :exportable_options, options
+          write_inheritable_attribute :exportable_options, options.reverse_merge({:columns => [], :scopes => [], :finder_options => {}})
           class_inheritable_reader :exportable_options
           #Default is to have all columns - salt and hashed_password and password
           write_inheritable_attribute :default_columns, self.columns.map(&:name) - ['salt', 'password', 'hashed_password']
@@ -133,8 +133,9 @@ module NovaFabrica #:nodoc:
         # Finer Controller:
 
         # User.to_export('csv', [:first_name, :last_name, :username], :limit => 5, :order => :username)
-        def to_export(format, columns=[], options={})
+        def to_export(format, options={})
           # I feel it's inefficient for this method to run if no columns are given MB
+          columns = options[:columns] ? options[:columns] : exportable_options[:columns]s
           columns = default_columns if columns.empty?
           data_rows = self.get_export_data(columns, options)
           return self.create_report(format, columns, data_rows)
@@ -144,7 +145,10 @@ module NovaFabrica #:nodoc:
         def get_export_data(columns, options={})
           collection = self
           options.reverse_merge!(exportable_options)
-          collection = self.find(:all, options)
+          for scope in options[:scopes]
+            collection = collection.send(scope)
+          end
+          collection = collection.find(:all, options[:finder_options])
           rows = collection.inject([]) {|memo, item| memo << item.export_columns(columns) }
           return rows
         end
