@@ -22,9 +22,9 @@ describe "Make Exportable" do
 
     describe "mattr_accessors" do
 
-      it "should module accessor for exportable tables that starts as an empty array" do
+      it "should module accessor for exportable tables that starts as an empty hash" do
         #TODO Fails on Rcov because??? Does it load all the before(:all)
-        NovaFabrica::MakeExportable.exportable_tables.should == []
+        NovaFabrica::MakeExportable.exportable_classes.should == {}
       end
 
       it "should have a module accessor for supported types" do
@@ -89,7 +89,7 @@ describe "Make Exportable" do
       end
 
       it "should include the class table into the exportable tables attribute" do
-        NovaFabrica::MakeExportable.exportable_tables.should == ["users"]
+        NovaFabrica::MakeExportable.exportable_classes.should == {'user' => "users"}
       end
 
       it "should include NovaFabrica's ClassMethods on class" do
@@ -152,43 +152,68 @@ describe "Make Exportable" do
         before(:each) do
           clean_database!
 
-          User.create(:first_name => "user_1", :last_name => "Doe")
-          User.create(:first_name => "user_2", :last_name => "Doe")
+          User.create(:first_name => "user_1", :last_name => "Doe", :created_at => Time.parse("1/2/3"), :updated_at => Time.parse("1/2/3"))
+          User.create(:first_name => "user_2", :last_name => "Doe", :created_at => Time.parse("1/2/3"), :updated_at => Time.parse("1/2/3"))
         end
 
         describe "to_export" do
 
-          it "should raise a NoColumnsGivenError if there are no columns specified" do
-            lambda do
-              User.to_export('csv')
-            end.should raise_error(NovaFabrica::MakeExportableErrors::NoColumnsGivenError)
+          context "with explicit columns given" do
+
+            it "should export the columns as csv" do
+              User.to_export( "csv", [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
+            end
+
+            it "should export the columns as xls" do
+              User.to_export( "xls", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
+            end
+
+            it "should export the columns as tsv" do
+              User.to_export( "tsv", [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
+            end
+
+            it "should export the columns as html" do
+              User.to_export( "html", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
+            end
+
+            it "should export the columns as xml" do
+              User.to_export( "xml", [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
+            end
+
+            #We really could test this one forever.
+            it "should export the columns designated by the options given" do
+              User.to_export( "csv", [:first_name, "is_admin"], :conditions => {:first_name => "user_1"}).should == ["First Name,Is Admin\nuser_1,false\n", "text/csv; charset=utf-8; header=present"]
+            end
+
           end
 
-          it "should export the columns as csv" do
-            User.to_export( "csv", [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
-          end
+          context "default columns" do
 
-          it "should export the columns as xls" do
-            User.to_export( "xls", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
-          end
+            it "should export the columns as csv" do
+              User.to_export( "csv").should ==  ["Id,First Name,Last Name,Email,Is Admin,Created At,Updated At\n17,user_1,Doe,\"\",false,2001-02-03 00:00:00 -0500,2001-02-03 00:00:00 -0500\n18,user_2,Doe,\"\",false,2001-02-03 00:00:00 -0500,2001-02-03 00:00:00 -0500\n", "text/csv; charset=utf-8; header=present"]
+            end
 
-          it "should export the columns as tsv" do
-            User.to_export( "tsv", [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
-          end
+            it "should export the columns as xls" do
+              User.to_export( "xls").should == ["<table>\n\t<tr>\n\t\t<th>Id</th>\n\t\t<th>First Name</th>\n\t\t<th>Last Name</th>\n\t\t<th>Email</th>\n\t\t<th>Is Admin</th>\n\t\t<th>Created At</th>\n\t\t<th>Updated At</th>\n\t</tr>\n\t<tr>\n\t\t<td>19</td>\n\t\t<td>user_1</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t</tr>\n\t<tr>\n\t\t<td>20</td>\n\t\t<td>user_2</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
+            end
 
-          it "should export the columns as html" do
-            User.to_export( "html", [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
-          end
+            it "should export the columns as tsv" do
+              User.to_export( "tsv").should == ["Id\tFirst Name\tLast Name\tEmail\tIs Admin\tCreated At\tUpdated At\n21\tuser_1\tDoe\t\tfalse\t2001-02-03 00:00:00 -0500\t2001-02-03 00:00:00 -0500\n22\tuser_2\tDoe\t\tfalse\t2001-02-03 00:00:00 -0500\t2001-02-03 00:00:00 -0500\n", "text/tab-separated-values; charset=utf-8; header=present"]
+            end
 
-          it "should export the columns as xml" do
-            User.to_export( "xml", [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
-          end
+            it "should export the columns as html" do
+              User.to_export( "html").should == ["<table>\n\t<tr>\n\t\t<th>Id</th>\n\t\t<th>First Name</th>\n\t\t<th>Last Name</th>\n\t\t<th>Email</th>\n\t\t<th>Is Admin</th>\n\t\t<th>Created At</th>\n\t\t<th>Updated At</th>\n\t</tr>\n\t<tr>\n\t\t<td>23</td>\n\t\t<td>user_1</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t</tr>\n\t<tr>\n\t\t<td>24</td>\n\t\t<td>user_2</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t\t<td>2001-02-03 00:00:00 -0500</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
+            end
 
-          #We really could test this one forever.
-          it "should export the columns designated by the options given" do
-            User.to_export( "csv", [:first_name, "is_admin"], :conditions => {:first_name => "user_1"}).should == ["First Name,Is Admin\nuser_1,false\n", "text/csv; charset=utf-8; header=present"]
-          end
+            it "should export the columns as xml" do
+              User.to_export( "xml").should ==["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<id>25</id>\n\t\t<first-name>user_1</first-name>\n\t\t<last-name>Doe</last-name>\n\t\t<email></email>\n\t\t<is-admin>false</is-admin>\n\t\t<created-at>2001-02-03 00:00:00 -0500</created-at>\n\t\t<updated-at>2001-02-03 00:00:00 -0500</updated-at>\n\t</user>\n\t<user>\n\t\t<id>26</id>\n\t\t<first-name>user_2</first-name>\n\t\t<last-name>Doe</last-name>\n\t\t<email></email>\n\t\t<is-admin>false</is-admin>\n\t\t<created-at>2001-02-03 00:00:00 -0500</created-at>\n\t\t<updated-at>2001-02-03 00:00:00 -0500</updated-at>\n\t</user>\n</users>\n", "application/xml; header=present"]
+            end
 
+            #We really could test this one forever.
+            it "should export the columns designated by the options given" do
+              User.to_export( "csv", [], :conditions => {:first_name => "user_1"}).should == ["Id,First Name,Last Name,Email,Is Admin,Created At,Updated At\n27,user_1,Doe,\"\",false,2001-02-03 00:00:00 -0500,2001-02-03 00:00:00 -0500\n", "text/csv; charset=utf-8; header=present"]
+            end
+          end
 
         end
 
@@ -198,8 +223,8 @@ describe "Make Exportable" do
             User.get_export_data([:first_name, :last_name]).should == [["user_1", "Doe"], ["user_2", "Doe"]]
           end
 
-          it "should accept a named_scope" do
-            User.get_export_data([:first_name, :last_name], :a_limiter).should == [["user_1", "Doe"]]
+          it "should chainable on named_scopes" do
+            User.a_limiter.get_export_data([:first_name, :last_name]).should == [["user_1", "Doe"]]
           end
 
           it "should create order array of arrays of ordered column data by the options given" do

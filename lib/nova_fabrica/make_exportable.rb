@@ -34,9 +34,9 @@ module NovaFabrica #:nodoc:
       :html => {:name => 'HTML', :data_type => "text/html; charset=utf-8; header=present"}
     }
 
-    mattr_accessor :exportable_tables
+    mattr_accessor :exportable_classes
     # Contains an array of exportable tables
-    @@exportable_tables = []
+    @@exportable_classes = {}
 
     mattr_accessor :exportable_formats
     # Contains the exportable formats for the included class, is initiated with all supported formats
@@ -106,13 +106,16 @@ module NovaFabrica #:nodoc:
         #
 
         def make_exportable(options={})
-          unless NovaFabrica::MakeExportable.exportable_tables.include?(self.table_name)
-            NovaFabrica::MakeExportable.exportable_tables << self.table_name
+          unless NovaFabrica::MakeExportable.exportable_classes.include?(self.name.underscore)
+            NovaFabrica::MakeExportable.exportable_classes[self.name.underscore] = self.table_name
           end
           extend NovaFabrica::MakeExportable::ClassMethods
           include NovaFabrica::MakeExportable::InstanceMethods
           write_inheritable_attribute :exportable_options, options
           class_inheritable_reader :exportable_options
+          #Default is to have all columns - salt and hashed_password and password
+          write_inheritable_attribute :default_columns, self.columns.map(&:name) - ['salt', 'password', 'hashed_password']
+          class_inheritable_reader :default_columns
         end
 
       end
@@ -132,21 +135,16 @@ module NovaFabrica #:nodoc:
         # User.to_export('csv', [:first_name, :last_name, :username], :limit => 5, :order => :username)
         def to_export(format, columns=[], options={})
           # I feel it's inefficient for this method to run if no columns are given MB
-          raise NovaFabrica::MakeExportableErrors::NoColumnsGivenError.new("You must include the columns or methods that you want to export") if columns.empty?
+          columns = default_columns if columns.empty?
           data_rows = self.get_export_data(columns, options)
           return self.create_report(format, columns, data_rows)
         end
 
         # <tt>get_export_data</tt> is a generic class method that finds all objects of a given class fitting the options passed into it and outputs an ordered array of arrays containing the objects data to be used with create_report for
         def get_export_data(columns, options={})
-          if !options.is_a?(Hash)
-            collection = self.send(options)
-          elsif options.empty? &&  !exportable_options.is_a?(Hash)
-            collection = self.send(options)
-          else
-            options.reverse_merge!(exportable_options)
-            collection = self.find(:all, options)
-          end
+          collection = self
+          options.reverse_merge!(exportable_options)
+          collection = self.find(:all, options)
           rows = collection.inject([]) {|memo, item| memo << item.export_columns(columns) }
           return rows
         end
