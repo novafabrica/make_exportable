@@ -126,7 +126,7 @@ module NovaFabrica #:nodoc:
           include NovaFabrica::MakeExportable::InstanceMethods
           write_inheritable_attribute :exportable_options, options.reverse_merge({:columns => [], :scopes => [], :finder_options => {}})
           class_inheritable_reader :exportable_options
-          # Default is to have all columns minuse salt and hashed_password and password
+          # Default is to have all columns minus salt and hashed_password and password
           write_inheritable_attribute :default_columns, self.columns.map(&:name) - ['salt', 'password', 'hashed_password']
           class_inheritable_reader :default_columns
         end
@@ -162,7 +162,6 @@ module NovaFabrica #:nodoc:
         end
 
         # <tt>get_export_data</tt> is a generic class method that finds all objects of a given class fitting the options passed into it and outputs an ordered array of arrays containing the objects data to be used with create_report for
-        #TODO shouldn't this be a protected method. Should the user ever call this
         def get_export_data(columns, options={})
           collection = self
           options.reverse_merge!(exportable_options)
@@ -176,9 +175,6 @@ module NovaFabrica #:nodoc:
 
         # <tt>create_report</tt> is a generic class method to allow you to export data in a easy to describe manner.
         # It takes for it's arguments the format you wish to use, the array headers for each column you wish to export and the exportable rows as described as arrays inside of an array
-        #
-        # TODO should we check to make sure that the rows are all the same size. I understand this might slow the plugin down to much. But the export will be useless unless row size is kept correct. Barring of course XML.
-        #TODO shouldn't this be a protected method. Should the user ever call this
         def create_report( format, headers=[], rows=[] )
           raise NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError.new("#{format} not supported by MakeExportable") unless NovaFabrica::MakeExportable.exportable_format_supported?(format)
           header_size = headers.size

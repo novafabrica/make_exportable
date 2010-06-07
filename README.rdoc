@@ -93,7 +93,7 @@ Additional Methods
 
 If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the **make\_exportable** method as defaults when including it into your class. 
 
- * columns - array of columns names and methods to be exported
+ * columns - array of columns names and methods to be exported. This defaults to all columns minus salt and hashed_password and password
  * scopes - scopes to be used on the Class before exports
  * finder_options - Find options for backwards capability with rails 2
 
