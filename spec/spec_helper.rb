@@ -23,6 +23,8 @@ end
 Bundler.require
 
 require File.expand_path('../../lib/make_exportable', __FILE__)
+Date::DATE_FORMATS[:default] = '%d/%m/%Y'
+Time::DATE_FORMATS[:default] = '%A %B %d %Y at %I:%M%p'
 
 ENV['DB'] ||= 'sqlite3'
 
