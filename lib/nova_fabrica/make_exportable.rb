@@ -179,12 +179,16 @@ module NovaFabrica #:nodoc:
           raise NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError.new("#{format} not supported by MakeExportable") unless NovaFabrica::MakeExportable.exportable_format_supported?(format)
           header_size = headers.size
           rows_clean = true
-          for row in rows
+          index = 0
+          row_array = []
+          rows.each_with_index do |row, i|
+            row_array = row
+            index = i
             rows_clean = header_size == row.size
             break if rows_clean == false
           end
-          # NoSQL makes this important
-          raise NovaFabrica::MakeExportableErrors::ExportFault.new("Date missing for exported row are you using NoSQL?") unless
+          # NoSQL makes this important we could send back row or index
+          raise NovaFabrica::MakeExportableErrors::ExportFault.new("Date missing for exported row #{index} data: #{row_array} are you using NoSQL?") unless
           rows_clean
           data_type = NovaFabrica::MakeExportable.format_data_type_for(format)
           data_string = eval("generate_#{format.to_s}(headers, rows)")
