@@ -5,8 +5,8 @@ begin
   require "bundler"
   require "active_record"
   require "fastercsv" unless ActiveRecord::VERSION::MAJOR >= 3
-  
-  
+
+
 
   if Gem::Version.new(Bundler::VERSION) <= Gem::Version.new("0.9.5")
     raise RuntimeError, "Your bundler version is too old." +
@@ -23,7 +23,6 @@ end
 Bundler.require
 
 require File.expand_path('../../lib/make_exportable', __FILE__)
-
 
 ENV['DB'] ||= 'sqlite3'
 

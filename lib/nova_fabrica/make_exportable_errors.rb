@@ -5,5 +5,9 @@ module NovaFabrica
 
     class NoColumnsGivenError < StandardError #:nodoc:
     end
+    
+    class ExportFault < StandardError #:nodoc:
+    end
+    
   end
 end

@@ -226,14 +226,14 @@ describe "Make Exportable" do
           it "should chainable on named_scopes" do
             User.a_limiter.get_export_data([:first_name, :last_name]).should == [["user_1", "Doe"]]
           end
-          
+
           it "should allow a scope to be sent" do
             User.get_export_data([:first_name, :last_name], :scopes => ['a_limiter']).should == [["user_1", "Doe"]]
           end
-          
-           it "should allow multiple scopes to be sent" do
-              User.get_export_data([:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["user_2", "Doe"]]
-            end
+
+          it "should allow multiple scopes to be sent" do
+            User.get_export_data([:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["user_2", "Doe"]]
+          end
 
           it "should create order array of arrays of ordered column data by the options given" do
             User.get_export_data([:first_name, :last_name], :finder_options => {:order => " ID DESC"}).should == [["user_2", "Doe"], ["user_1", "Doe"]]
@@ -253,6 +253,12 @@ describe "Make Exportable" do
 
           it 'should export an array of header and array of arrays of rows in the specified format' do
             User.create_report("csv", ["Title", "Another Title"], [[ "data", 'lovely data'],["", "more lovely data"]]).should == ["Title,Another Title\ndata,lovely data\n\"\",more lovely data\n", "text/csv; charset=utf-8; header=present"]
+          end
+
+          it "should raise an ExportFault if the datasets are not all the same size" do
+            lambda do
+              User.create_report("csv", ["Title", "Another Title"], [[ "data", 'lovely data'],["more lovely data"]])
+            end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFault)
           end
 
         end

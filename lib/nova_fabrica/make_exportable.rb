@@ -35,7 +35,7 @@ module NovaFabrica #:nodoc:
     }
 
     mattr_accessor :exportable_classes
-    # Contains an array of exportable tables
+    # Contains an array of exportable classes
     @@exportable_classes = {}
 
     mattr_accessor :exportable_formats
@@ -98,11 +98,24 @@ module NovaFabrica #:nodoc:
         #
         # For finer controll you can include any options you would normally apply to a find method
         #
-        # Example:
+        # These options are
+        # * columns - array of columns names and methods to be exported
+        # * scopes - scopes to be used on the Class before exports
+        # * finder_options - Find options for backwards capability with rails 2
         #
-        # class Customer < ActiveRecord::Base
-        #  make_exportable :order => 'last_name ASC, first_name ASC', :conditions => {:active => true}
-        # end
+        # Examples:
+        #
+        #   class Customer < ActiveRecord::Base
+        #     make_exportable :finder_options => {:order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
+        #   end
+        #
+        #   class Customer < ActiveRecord::Base
+        #     make_exportable :columns => [:id, :username, :full_name]
+        #   end
+        #
+        #   class Customer < ActiveRecord::Base
+        #     make_exportable :scopes => [:new_signups, :with_referals]
+        #   end
         #
 
         def make_exportable(options={})
@@ -113,7 +126,7 @@ module NovaFabrica #:nodoc:
           include NovaFabrica::MakeExportable::InstanceMethods
           write_inheritable_attribute :exportable_options, options.reverse_merge({:columns => [], :scopes => [], :finder_options => {}})
           class_inheritable_reader :exportable_options
-          #Default is to have all columns - salt and hashed_password and password
+          # Default is to have all columns minuse salt and hashed_password and password
           write_inheritable_attribute :default_columns, self.columns.map(&:name) - ['salt', 'password', 'hashed_password']
           class_inheritable_reader :default_columns
         end
@@ -123,25 +136,33 @@ module NovaFabrica #:nodoc:
       module ClassMethods
 
         # <tt>to_export</tt> is a generic class method to allow you to simply export all records for an entire class.
-        # It takes for it's arguments the format you wish to use, the columns or method calls you wish to export and the options to be used in your find operation. It also will use any options designated when make_exportable was initialized for the class unless overwritten.
+        # It takes for it's arguments the format you wish to use, and an option hash.
         #
+        # These options are
+        # * columns - array of columns names and methods to be exported
+        # * scopes - scopes to be used on the Class before exports
+        # * finder_options - Find options for backwards capatibility with rails 2
+        #
+        # You can either attached scopes to the class before calling to_export or send them through the method as an array that
+        # will be called in order.
         # Basic Example:
         #
-        # User.to_export('xml', [:first_name, :last_name, :username])
+        # User.to_export('xml', :columns => [:first_name, :last_name, :username])
         #
         #
         # Finer Controller:
-
-        # User.to_export('csv', [:first_name, :last_name, :username], :limit => 5, :order => :username)
+        #
+        # User.order_by_username.to_export('csv', :columns =>  [:first_name, :last_name, :username])
         def to_export(format, options={})
           # I feel it's inefficient for this method to run if no columns are given MB
-          columns = options[:columns] ? options[:columns] : exportable_options[:columns]s
+          columns = options[:columns] ? options[:columns] : exportable_options[:columns]
           columns = default_columns if columns.empty?
           data_rows = self.get_export_data(columns, options)
           return self.create_report(format, columns, data_rows)
         end
 
         # <tt>get_export_data</tt> is a generic class method that finds all objects of a given class fitting the options passed into it and outputs an ordered array of arrays containing the objects data to be used with create_report for
+        #TODO shouldn't this be a protected method. Should the user ever call this
         def get_export_data(columns, options={})
           collection = self
           options.reverse_merge!(exportable_options)
@@ -157,8 +178,18 @@ module NovaFabrica #:nodoc:
         # It takes for it's arguments the format you wish to use, the array headers for each column you wish to export and the exportable rows as described as arrays inside of an array
         #
         # TODO should we check to make sure that the rows are all the same size. I understand this might slow the plugin down to much. But the export will be useless unless row size is kept correct. Barring of course XML.
+        #TODO shouldn't this be a protected method. Should the user ever call this
         def create_report( format, headers=[], rows=[] )
           raise NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError.new("#{format} not supported by MakeExportable") unless NovaFabrica::MakeExportable.exportable_format_supported?(format)
+          header_size = headers.size
+          rows_clean = true
+          for row in rows
+            rows_clean = header_size == row.size
+            break if rows_clean == false
+          end
+          # NoSQL makes this important
+          raise NovaFabrica::MakeExportableErrors::ExportFault.new("Date missing for exported row are you using NoSQL?") unless
+          rows_clean
           data_type = NovaFabrica::MakeExportable.format_data_type_for(format)
           data_string = eval("generate_#{format.to_s}(headers, rows)")
           return data_string, data_type
