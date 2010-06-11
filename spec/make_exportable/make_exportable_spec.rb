@@ -13,11 +13,12 @@ describe "Make Exportable" do
     end
 
     it "should have constants describing the different that can be exported" do
-      NovaFabrica::MakeExportable::SUPPORTED_FORMATS.should_not be_nil
-      NovaFabrica::MakeExportable::SUPPORTED_FORMATS.key?(:csv).should be_true
-      NovaFabrica::MakeExportable::SUPPORTED_FORMATS.key?(:tsv).should be_true
-      NovaFabrica::MakeExportable::SUPPORTED_FORMATS.key?(:xml).should be_true
-      NovaFabrica::MakeExportable::SUPPORTED_FORMATS.key?(:html).should be_true
+      NovaFabrica::MakeExportable.exportable_formats.should_not be_nil
+      NovaFabrica::MakeExportable.exportable_formats.key?(:csv).should be_true
+      NovaFabrica::MakeExportable.exportable_formats.key?(:xls).should be_true
+      NovaFabrica::MakeExportable.exportable_formats.key?(:tsv).should be_true
+      NovaFabrica::MakeExportable.exportable_formats.key?(:xml).should be_true
+      NovaFabrica::MakeExportable.exportable_formats.key?(:html).should be_true
     end
 
     describe "mattr_accessors" do
@@ -49,36 +50,14 @@ describe "Make Exportable" do
       end
 
       it "should tell the descriptive name of a format" do
-        NovaFabrica::MakeExportable.format_name(:csv).should == "Comma-separated (CSV)"
-      end
-
-      it "format_name should raise an ExportFormatNotFoundError if the format is not supported by mate exportable" do
-        lambda do
-          NovaFabrica::MakeExportable.format_name(:unsuported)
-        end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError)
-
+        NovaFabrica::MakeExportable.exportable_formats[:csv].name.should == "Comma-separated (CSV)"
       end
 
       it "should tell the mime data-type of a format" do
-        NovaFabrica::MakeExportable.format_data_type_for(:csv).should == "text/csv; charset=utf-8; header=present"
-      end
-
-      it "format_data_type_for should raise an ExportFormatNotFoundError if the format is not supported by mate exportable" do
-        lambda do
-          NovaFabrica::MakeExportable.format_data_type_for(:unsuported)
-        end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError)
-
-      end
-
-      it "should remove any unsuported from the exportable_formats accessor and keep each format uniq" do
-        NovaFabrica::MakeExportable.exportable_formats += [:nonsense, :more_nonsense, :extra_special_nonsense, :xml]
-        NovaFabrica::MakeExportable.remove_any_unsupported_formats
-        NovaFabrica::MakeExportable.exportable_formats.should == [:csv, :xls, :tsv, :html, :xml]
+        NovaFabrica::MakeExportable.exportable_formats[:csv].data_type.should == "text/csv; charset=utf-8; header=present"
       end
 
     end
-
-
 
     describe "making a class exportable" do
 
@@ -89,7 +68,7 @@ describe "Make Exportable" do
       end
 
       it "should include the class table into the exportable tables attribute" do
-        NovaFabrica::MakeExportable.exportable_classes.should == {'user' => "users"}
+        NovaFabrica::MakeExportable.exportable_classes.should == {'User' => User}
       end
 
       it "should include NovaFabrica's ClassMethods on class" do
@@ -106,10 +85,8 @@ describe "Make Exportable" do
 
       it "should include NovaFabrica's InstanceMethods on a class instance" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          User.instance_methods.include?(:export_columns).should be_true
           User.instance_methods.include?(:export_attribute).should be_true
         else
-          User.instance_methods.include?("export_columns").should be_true
           User.instance_methods.include?("export_attribute").should be_true
         end
       end
@@ -128,23 +105,19 @@ describe "Make Exportable" do
           @user = User.create(:first_name => "Carl", :last_name => "Joans")
         end
 
-        it "should collect the named columns" do
-          @user.export_columns(["first_name", "last_name", "full_name", "is_admin", "fake_command"]).should == ["Carl", "Joans", "Carl Joans", "false", ""]
-        end
+        it "should be able to call methods as attributes during exporting" # do
+         #          @user.export_attribute('full_name').should == "Carl Joans"
+         #        end
 
-        it "should be able to call methods as attributes during exporting" do
-          @user.export_attribute('full_name').should == "Carl Joans"
-        end
-
-        it "should allow custom methods following the #method_export convention" do
-          @user.export_attribute('admin').should == "monkey"
-        end
+        it "should allow custom methods following the #method_export convention" # do
+         #          @user.export_attribute('admin').should == "monkey"
+         #        end
 
         #Wouldn't it be better to call an Error?
-        it "should not blow up if the attribute doesn't exist" do
-          @user.export_attribute('ful_name').should == ""
-        end
-
+        it "should not blow up if the attribute doesn't exist" # do
+         #          @user.export_attribute('ful_name').should == ""
+         #        end
+        
       end
 
       describe "Inherited Class Methods" do
@@ -161,23 +134,23 @@ describe "Make Exportable" do
           context "with explicit columns given" do
 
             it "should export the columns as csv" do
-              User.to_export( "csv", :columns => [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
+              User.to_export( "csv", :only => [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
             end
 
             it "should export the columns as xls" do
-              User.to_export( "xls", :columns =>  [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
+              User.to_export( "xls", :only =>  [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
             end
 
             it "should export the columns as tsv" do
-              User.to_export( "tsv", :columns => [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
+              User.to_export( "tsv", :only => [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
             end
 
             it "should export the columns as html" do
-              User.to_export( "html", :columns => [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
+              User.to_export( "html", :only => [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
             end
 
             it "should export the columns as xml" do
-              User.to_export( "xml", :columns => [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
+              User.to_export( "xml", :only => [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<users>\n\t<user>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n\t<user>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</user>\n</users>\n", "application/xml; header=present"]
             end
 
             #We really could test this one forever.
@@ -245,10 +218,10 @@ describe "Make Exportable" do
 
         describe "create_report" do
 
-          it "should raise an ExportFormatNotFoundError if the format is not supported" do
+          it "should raise an FormatNotFound if the format is not supported" do
             lambda do
               User.create_report("NONSUPPORTED")
-            end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFormatNotFoundError)
+            end.should raise_error(NovaFabrica::MakeExportable::FormatNotFound)
           end
 
           it 'should export an array of header and array of arrays of rows in the specified format' do
@@ -258,7 +231,7 @@ describe "Make Exportable" do
           it "should raise an ExportFault if the datasets are not all the same size" do
             lambda do
               User.create_report("csv", ["Title", "Another Title"], [[ "data", 'lovely data'],["more lovely data"]])
-            end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFault)
+            end.should raise_error(NovaFabrica::MakeExportable::ExportFault)
           end
 
         end

@@ -1,18 +1,16 @@
 module NovaFabrica
   module MakeExportableHelper
 
-    def exportable_table_list
-      NovaFabrica::MakeExportable.exportable_classes.sort.map {|key, value| [value.to_s]}
+    def exportable_class_list
+      NovaFabrica::MakeExportable.exportable_classes.map do |key, klass| 
+        [klass.table_name, key]
+      end.sort {|item1, item2| item1[0] <=> item2[0] }
     end
     
-    def exportable_class_list
-      NovaFabrica::MakeExportable.exportable_classes.sort.map {|key, value| [key.classify]}
-    end
-  
     def exportable_format_list
-      NovaFabrica::MakeExportable.exportable_formats.map do |fmt|
-        [NovaFabrica::MakeExportable.format_name(fmt), fmt.to_s]
-      end
+      NovaFabrica::MakeExportable.exportable_formats.map do |key, fmt|
+        [fmt.name, key]
+      end.sort {|item1, item2| item1[0] <=> item2[0] }
     end
 
   end
