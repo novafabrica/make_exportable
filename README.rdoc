@@ -93,7 +93,8 @@ Additional Methods
 
 If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class. 
 
- * as - array of columns names and methods to be exported. This defaults to all columns minus salt and hashed_password and password
+ * as - array of columns names and methods to be exported. 
+ This defaults to all columns minus salt and hashed_password and password
  * scopes - scopes to be used on the Class before exports
  * finder_options - Find options for backwards capability with rails 2
 
@@ -111,39 +112,41 @@ If you have a general columns, scopes, and conditions you will be calling in mul
   
 For ease of use MakeExportable dynamically adds a few useful methods. Each export format gets three "magic methods".
 
-**to\_format\_report**, where "format" is the export format (as in "to_csv_report"), which calls **to\_export(format)**.
+<em>to_csv_export</em>, where "format" is the export format (as in "to_csv_report"), which calls **to\_export(format)**.
 
-**create\_format\_for** (and **create\_format\_report\_for**), where "format" is the export format (as in "create_csv_for"/"create_csv_report_for"), which calls **create\_report\_for(format)**.
+<em>create_format_for</em> (and <em>create_format_report</em>), where "format" is the export format (as in "create_csv_report"/"to_csv_export"), which calls <em>create_format_report</em>.
 
 
 Example
 -------
 
-	class CustomerController < ApplicationController
-	
-		def export
-			format = 'csv'
-			columns = ['first_name', 'last_name', 'city', 'state', 'email']
-			options = {:conditions => "active = 1"}
-			export_data, data_type = Customer.to_export(format, columns, options)
-			
-			# Send data to user as file
-			file_name = "customer_export.#{format}"
-			send_data(export_data, :type => data_type, :disposition => 'attachment', 
-										:filename => file_name )
-		end
-	
-	end
+  class CustomerController < ApplicationController
+
+    def export
+      format = 'csv'
+      columns = ['first_name', 'last_name', 'city', 'state', 'email']
+      options = {:conditions => "active = 1"}
+      export_data, data_type = Customer.to_export(format, columns, options)
+
+      # Send data to user as file
+      file_name = "customer_export.#{format}"
+      send_data export_data, {
+        :type => data_type, 
+        :disposition => 'attachment', 
+        :filename => file_name 
+        }
+  	end
+
+  end
 
 
 == INFO
   
 Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.</td>
 
-License: Copyright 2010 by Kevin Skoglund. 
-         released under the attached MIT-LICENSE. 
-         See the LICENSE file included in the distribution.
-GitHub: <a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
+License: Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICENSE. 
+
+GitHub: http://github.com/Novafabrica/make_exportable/tree/master
   
 
 CONTRIBUTORS
