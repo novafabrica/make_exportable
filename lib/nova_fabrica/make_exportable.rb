@@ -23,12 +23,10 @@ module NovaFabrica #:nodoc:
   module MakeExportable #:nodoc:
 
     # Inventory of the exportable classes, stored in ActiveRecord::Base
-    # TODO: Do we need a mechanism to ensure these values can't be messed up?
     mattr_accessor :exportable_classes
     @@exportable_classes = {}
 
     # Inventory of the exportable formats, stored in ActiveRecord::Base
-    # TODO: Do we need a mechanism to ensure these values can't be messed up?
     mattr_accessor :exportable_formats
     @@exportable_formats = {}
 
@@ -36,6 +34,7 @@ module NovaFabrica #:nodoc:
       target.extend(ActiveRecordBaseMethods)
     end
 
+    # Checks to see if a format is currently supported
     def self.exportable_format_supported?(format)
       @@exportable_formats.include?(format.to_sym)
     end
@@ -54,21 +53,25 @@ module NovaFabrica #:nodoc:
       #     make_exportable
       #   end
       #
-      # For finer controll you can include any options you would normally apply to a find method
+      # The method allows for fine controll of how the class will be defaultly exported via a hash
+      # 
+      # These options include 
+      # * :only and :except - assigns which columns you would like to export.
+      # * :scopes - pass in an array of scopes to be attached to the Class before export
+      # * :headers - override the default headers for the exported attributes. Accepts a empty string
+      # * :as - specifies the default format to export as
       #
-      # These options are
-      # * columns - array of columns names and methods to be exported
-      # * scopes - scopes to be used on the Class before exports
-      # * finder_options - Find options for backwards capability with rails 2
+      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
+      # This will be depricated in future version 
       #
       # Examples:
       #
       #   class Customer < ActiveRecord::Base
-      #     make_exportable :finder_options => {:order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
+      #     make_exportable :order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
       #   end
       #
       #   class Customer < ActiveRecord::Base
-      #     make_exportable :columns => [:id, :username, :full_name]
+      #     make_exportable :only => [:id, :username, :full_name]
       #   end
       #
       #   class Customer < ActiveRecord::Base
@@ -86,6 +89,7 @@ module NovaFabrica #:nodoc:
         # Determine the exportable formats, default to all registered formats
         # and remove formats using the :as option
         # TODO: make it impossible to provide no valid formats
+        # TODO Formats does nothing yet
         options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys
         if format_options = options.delete(:as)
           options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys & Array.wrap(format_options)
@@ -93,7 +97,6 @@ module NovaFabrica #:nodoc:
 
         # Determine the exportable columns, default to all columns and then
         # remove columns using the :only and :except options
-        # TODO: ability to specify attributes that are not columns has been lost!
         options[:columns] = self.column_names.map(&:to_sym)
         options = self.process_only_and_except(:columns, options)
 
@@ -114,6 +117,7 @@ module NovaFabrica #:nodoc:
 
       # TODO: move this out of ActiveRecord::Base
       def process_only_and_except(key, hash)
+        #If hash does not contain only or except will return the hash unmodulated.
         if only_options = hash.delete(:only)
           only_array = Array.wrap(only_options).map {|i| i.to_sym}
           hash[key] = only_array
@@ -140,21 +144,22 @@ module NovaFabrica #:nodoc:
       # <tt>to_export</tt> is a generic class method to allow you to simply export all records for an entire class.
       # It takes for it's arguments the format you wish to use, and an option hash.
       #
-      # These options are
-      # * columns - array of columns names and methods to be exported
-      # * scopes - scopes to be used on the Class before exports
-      # * finder_options - Find options for backwards capatibility with rails 2
+      # The method allows for fine controll of how the class will be defaultly exported via a hash
+      # 
+      # These options include 
+      # * :only and :except - assigns which columns you would like to export.
+      # * :scopes - pass in an array of scopes to be attached to the Class before export
+      # * :headers - override the default headers for the exported attributes. Accepts a empty string
       #
-      # You can either attached scopes to the class before calling to_export or send them through the method as an array that
-      # will be called in order.
-      # Basic Example:
+      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
+      # This will be depricated in future version
       #
       # User.to_export('xml', :columns => [:first_name, :last_name, :username])
       #
       #
       # Finer Controller:
       #
-      # User.order_by_username.to_export('csv', :columns =>  [:first_name, :last_name, :username])
+      # User.order_by_username.to_export('csv', :only =>  [:first_name, :last_name, :username])
       def to_export(format, options={})
         options.reverse_merge!(exportable_options.slice([:only, :except]))
         options = self.process_only_and_except(:columns, options)
@@ -169,13 +174,13 @@ module NovaFabrica #:nodoc:
         options.reverse_merge!(exportable_options)
         find_options = options.slice(:conditions, :order, :include, :group, :having,
                                      :limit, :offset, :joins)
-
+        #For rails 2.3 capatibility
         collection = ActiveRecord::VERSION::MAJOR >= 3 ? self.scoped : self
         options[:scopes].each do |scope|
           collection = collection.send(scope)
         end
-
-        if ActiveRecord::VERSION::MAJOR >= 3 ? self.scoped : self
+        #For rails 2.3 capatibility
+        if ActiveRecord::VERSION::MAJOR >= 3 
           collection = collection.find(:all, find_options)
         else
           collection = collection.all

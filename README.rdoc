@@ -1,5 +1,5 @@
-MakeExportable
-======================
+= MakeExportable
+
 MakeExportable is a Rails gem/plugin that makes exporting your model's data effortless. It works in a variety of formats and can filter down what gets exported using ActiveRecord's find method.
 
 Supported Formats 
@@ -11,6 +11,7 @@ At the moment MakeExportable supports
 * XLS: Excel Spreadsheet
 * XML: Extensible markup language
 * HTML: Hypertext markup language
+* JSON: JavaScript Object Notation
 	
 INSTALLATION
 -------------
@@ -19,7 +20,7 @@ INSTALLATION
 Usage
 -----
 
-To start using MakeExportable simply add a call to **make\_exportable** in any class you want to use for exporting data.
+To start using MakeExportable simply add a call to <em>make_exportable</em> in any class you want to use for exporting data.
 
 	class Customer < ActiveRecord::Base
 		make_exportable 
@@ -27,32 +28,31 @@ To start using MakeExportable simply add a call to **make\_exportable** in any c
 
 This includes the MakeExportable module in your class and gives your class access to MakeExportable's methods. 
 
-You can specify which formats you want to use in your class using the **@@exportable_formats** class variable.
+You can specify which formats you want to use in your class using the :as option.
 
 	class Customer < ActiveRecord::Base
-		make_exportable
-		@@exportable_formats = [:csv, xml]
+		make_exportable :as => [:csv, xml]
 	end
 
-To export your model's data you can simply call the class method **to\_export**.
+To export your model's data you can simply call the class method <em>to_export</em>
 
-	Customer.to_export("csv", :columns => ['first_name', 'last_name'])
+	Customer.to_export("csv", :only => ['first_name', 'last_name'])
 
-**to\_export** returns an array containing the data in CSV format and the appropriate mime-type for easy file sending.
+<em>to_export</em> returns an array containing the data in CSV format and the appropriate mime-type for easy file sending.
 
 You can easily switch the format by substituting 'csv' for your desired format. 
 
-	Customer.to_export("xml", :columns => ['first_name', 'last_name'])
+	Customer.to_export("xml", :only => ['first_name', 'last_name'])
 
  It also allows you to send finder options to the class. 
 
-	Customer.to_export("xml", :columns => ['first_name', 'last_name'], finder_options => {:conditions => {:last_name => "smith"}, :order => "DESC"})
+	Customer.to_export("xml", :columns => ['first_name', 'last_name'], :conditions => {:last_name => "smith"}, :order => "DESC")
 	
  and can be attached to a scope on the Given Class
  
  Customer.recent.to_export(:csv)
  
- **to\_export**  also allows scopes to be passed in as an array in the options hash
+ <em>to_export</em> also allows scopes to be passed in as an array in the options hash
   
   Customer.to_export(:csv, :scopes => ['recent'])
 
@@ -67,9 +67,9 @@ MakeExportable doesn't just export database columns. It can also export data ret
 		
 	end
 
-	Customer.to_export("csv", :columns => ['full_name'])
+	Customer.to_export("csv", :only => ['full_name'])
 
-If you want an attribute to be handled differently when exported, you can define a method with the syntax **attribute\_export** which will be called when exporting instead of the regular attribute.
+If you want an attribute to be handled differently when exported, you can define a method with the syntax <em>name_of_attribute_export</em> which will be called when exporting instead of the regular attribute.
 
 	class Customer < ActiveRecord::Base
 		make_exportable 
@@ -81,9 +81,9 @@ If you want an attribute to be handled differently when exported, you can define
 	end
 
 
-If you just have some data (such as an array or hash) you want to export, MakeExportable can do that also with the **create\_report\_for** method
+If you just have some data (such as an array or hash) you want to export, MakeExportable can do that also with the <em>create_report_for</em> method
 
-	Customer.create_report_for([headers], [[row1], [row2], [row3]], "csv")
+	Customer.create_report_for("csv", [headers], [[row1], [row2], [row3]])
 
 Just send the format, the column headers and an ordered array of rows.
 
@@ -91,9 +91,9 @@ Just send the format, the column headers and an ordered array of rows.
 Additional Methods
 ------------------
 
-If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the **make\_exportable** method as defaults when including it into your class. 
+If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class. 
 
- * columns - array of columns names and methods to be exported. This defaults to all columns minus salt and hashed_password and password
+ * as - array of columns names and methods to be exported. This defaults to all columns minus salt and hashed_password and password
  * scopes - scopes to be used on the Class before exports
  * finder_options - Find options for backwards capability with rails 2
 
@@ -136,15 +136,23 @@ Example
 	end
 
 
-INFO
-========
+== INFO
+
 <table>
-<tr><td>Author:</td><td>Kevin Skoglund, Nova Fabrica, Inc.
-</td></tr>
-<tr><td>License:</td><td>Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICENSE. See the LICENSE file included in the distribution.
-</td></tr>
-<tr><td>GitHub:</td><td><a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
-</td></tr>
+  <tr>
+    <td>Author:</td><td>Kevin Skoglund, Nova Fabrica, Inc.</td>
+  </tr>
+  <tr>
+    <td>
+      License:</td><td>Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICENSE. 
+      See the LICENSE file included in the distribution.
+    </td>
+  </tr>
+  <tr>
+    <td>GitHub:</td>
+    <td><a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
+    </td>
+  </tr>
 </table>
 
 CONTRIBUTORS
