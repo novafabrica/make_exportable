@@ -7,42 +7,32 @@ module NovaFabrica #:nodoc:
   module MakeExportable #:nodoc:
     class CSV < ExportableFormat
 
+      cattr_accessor :csv_type
+
       self.reference = :csv
       self.name      = 'CSV'
-      self.long      = 'Comma-separated (CSV)'
-      self.data_type = 'text/csv; charset=utf-8; header=present'
-
       self.register_format
-      
-      class << self
-        
-        def generate(data_set, data_headers=[])
-          if ::CSV.const_defined? :Reader
-            FasterCSV.generate do |csv|
-              unless data_headers.blank?
-                csv << data_headers.map {|h| sanitize(h.humanize)}
-              end
-              data_set.each do |row|
-                csv << row
-              end
-            end
-          else
-            ::CSV.generate do |csv|
-              unless data_headers.blank?
-                csv << data_headers.map {|f| sanitize(f.humanize)}
-              end
-              data_set.each do |row|
-                csv << row
-              end
-            end
-          end
-        end
-  
-        def sanitize(value)
-          value
-        end
+      self.csv_type = ::CSV.const_defined?(:Reader) ? FasterCSV : ::CSV
+
+      attr_accessor :data_set, :data_headers
+
+      def initialize(data_set, data_headers=[])
+        self.long      = 'Comma-separated (CSV)'
+        self.mime_type = 'text/csv; charset=utf-8;'
+        self.data_set = data_set
+        self.data_headers = data_headers
       end
 
+
+      def generate
+        generate_header_option(data_headers)
+        @@csv_type.generate do |csv|
+          csv << data_headers.map {|h| sanitize_and_titleize(h)} unless data_headers.blank?
+          data_set.each {|row| csv << row }
+        end
+      end
     end
+
   end
+
 end

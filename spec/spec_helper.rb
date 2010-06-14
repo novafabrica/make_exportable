@@ -50,5 +50,6 @@ def clean_database!
   models = [User, Post]
   models.each do |model|
     ActiveRecord::Base.connection.execute "DELETE FROM #{model.table_name}"
+    ActiveRecord::Base.connection.execute "delete from sqlite_sequence where name='#{model.table_name}'" 
   end
 end
