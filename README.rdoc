@@ -138,12 +138,12 @@ Example
 
 == INFO
   
-  Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.</td>
-  
-  License: Copyright 2010 by Kevin Skoglund. 
-           released under the attached MIT-LICENSE. 
-           See the LICENSE file included in the distribution.
-  GitHub: <a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
+Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.</td>
+
+License: Copyright 2010 by Kevin Skoglund. 
+         released under the attached MIT-LICENSE. 
+         See the LICENSE file included in the distribution.
+GitHub: <a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
   
 
 CONTRIBUTORS
