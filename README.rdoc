@@ -137,23 +137,14 @@ Example
 
 
 == INFO
-
-<table>
-  <tr>
-    <td>Author:</td><td>Kevin Skoglund, Nova Fabrica, Inc.</td>
-  </tr>
-  <tr>
-    <td>
-      License:</td><td>Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICENSE. 
-      See the LICENSE file included in the distribution.
-    </td>
-  </tr>
-  <tr>
-    <td>GitHub:</td>
-    <td><a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
-    </td>
-  </tr>
-</table>
+  
+  Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.</td>
+  
+  License: Copyright 2010 by Kevin Skoglund. 
+           released under the attached MIT-LICENSE. 
+           See the LICENSE file included in the distribution.
+  GitHub: <a href="http://github.com/Novafabrica/make_exportable/tree/master">http://github.com/Novafabrica/make_exportable/tree/master</a>
+  
 
 CONTRIBUTORS
 -------------
