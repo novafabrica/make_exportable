@@ -37,7 +37,7 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
     gemspec.name = "make_exportable"
-    gemspec.summary = "Makes exporting data effortless"
+    gemspec.summary = "Makes any Rails model easily exportable"
     gemspec.description = "MakeExportable is a Rails gem/plugin to assist in exporting application data as CSV, TSV, JSON, HTML, XML or Excel. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns."
     gemspec.email = "kevin@novafabrica.com"
     gemspec.homepage = "http://github.com/novafabrica/make_exportable"

@@ -98,11 +98,13 @@ If you want an attribute to be handled differently whenever it is exported, you 
 
 ==Setting Export Defaults
 
-If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class.  These are defaults which can still be overridden when you perform an export.
+If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class.
 
 * :only and :except - specify columns or methods to export (defaults to all columns)
 * :as - specify formats to allow for exporting (defaults to all formats)
 * :scopes - specify scopes to be called on the class before exporting
+
+These are defaults which can still be overridden when you perform an export.
 
   class Customer < ActiveRecord::Base
     make_exportable :as => [:csv, :tsv], :only => [:first_name, :last_name, :email], :scopes => ['visible', 'recent']
@@ -117,8 +119,8 @@ If you have a general columns, scopes, and conditions you will be calling in mul
 
 MakeExportable also allows you to export to a format using a dynamic name.  Each export format gets two "magic methods".
 
-<em>to_#{format}_export</em>
-<em>create_#{format}_report</em>
+  <em>to_#{format}_export</em>
+  <em>create_#{format}_report</em>
 
 In both cases "format" represents the lowercase abbreviation for the export format (e.g. "to_csv_export", "create_csv_report"). Then the options hash becomes the first argument instead of the second.
 
