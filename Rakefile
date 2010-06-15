@@ -33,22 +33,14 @@ rescue LoadError
   puts "Rspec not available. Install it with: gem install rspec"  
 end
 
-namespace 'rails2.3' do
-  task :spec do
-    gemfile = File.join(File.dirname(__FILE__), 'lib', 'acts_as_taggable_on', 'compatibility', 'Gemfile')
-    ENV['BUNDLE_GEMFILE'] = gemfile
-    Rake::Task['spec'].invoke    
-  end
-end
-
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gemspec|
     gemspec.name = "make_exportable"
-    gemspec.summary = "Export your model's data effortless"
-    gemspec.description = "MakeExportable is a Rails Gem/Plugin that makes exporting your model's data effortless. It works in a variety of formats and can filter down what gets exported using ActiveRecord's find method."
-    gemspec.email = "matt@novafabirca.com"
-    gemspec.homepage = "http://github.com/Fotoverite/make-exportable"
+    gemspec.summary = "Makes exporting data effortless"
+    gemspec.description = "MakeExportable is a Rails gem/plugin to assist in exporting application data as CSV, TSV, JSON, HTML, XML or Excel. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns."
+    gemspec.email = "kevin@novafabrica.com"
+    gemspec.homepage = "http://github.com/novafabrica/make_exportable"
     gemspec.authors = ["Kevin Skoglund", "Matthew Bergman"]
     gemspec.files =  FileList["[A-Z]*", "{generators,lib,spec,rails}/**/*"] - FileList["**/*.log"]
   end

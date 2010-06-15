@@ -1,8 +1,13 @@
-source :gemcutter
+source "http://rubygems.org"
 
-# Rails 3.0
 gem 'rails'
-gem 'rspec'        
-gem 'sqlite3-ruby', :require => 'sqlite3'
-gem 'jeweler'
-gem 'rcov'
+
+group :development do
+  gem 'jeweler'
+end
+
+group :test do
+  gem 'rspec'
+  gem 'sqlite3-ruby', :require => 'sqlite3'
+  gem 'rcov'
+end
