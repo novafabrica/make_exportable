@@ -247,7 +247,7 @@ describe "Make Exportable" do
           it "should raise an FormatNotFound if the format is not supported" do
             lambda do
               User.create_report("NONSUPPORTED")
-            end.should raise_error(MakeExportableErrors::FormatNotFound)
+            end.should raise_error(MakeExportable::FormatNotFound)
           end
 
           it 'should export an array of header and array of arrays of rows in the specified format' do
@@ -257,7 +257,7 @@ describe "Make Exportable" do
           it "should raise an ExportFault if the datasets are not all the same size" do
             lambda do
               User.create_report("csv", [[ "data", 'lovely data'],["more lovely data"]], :headers =>["Title", "Another Title"])
-            end.should raise_error(MakeExportableErrors::ExportFault)
+            end.should raise_error(MakeExportable::ExportFault)
           end
 
         end
@@ -280,7 +280,7 @@ describe "Make Exportable" do
 
           it "should not create a method if the format is not supported" do
             lambda do
-              User.create_csvd_for
+              User.create_csvd_report
             end.should raise_error(NoMethodError)
           end
 
@@ -298,7 +298,7 @@ describe "Make Exportable" do
 
           it "should not create a method if the format is not supported" do
             lambda do
-              User.create_csvd_for
+              User.to_csvd_export
             end.should raise_error(NoMethodError)
           end
 
