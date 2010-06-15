@@ -102,7 +102,7 @@ module MakeExportable #:nodoc:
         hash[key] = only_array
       end
       if except_options = hash.delete(:except)
-        only_array = Array.wrap(except_options).map {|i| i.to_sym}
+        except_array = Array.wrap(except_options).map {|i| i.to_sym}
         hash[key] = hash[key] - except_array
       end
       return hash
