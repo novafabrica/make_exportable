@@ -59,11 +59,14 @@ module MakeExportable #:nodoc:
       options.slice!(*valid_options)
 
       # Determine the exportable formats, default to all registered formats
-      # and remove formats using the :as option
-      # TODO: make it impossible to provide no valid formats
       options[:formats] = MakeExportable.exportable_formats.keys
       if format_options = options.delete(:as)
-        options[:formats] = MakeExportable.exportable_formats.keys & Array.wrap(format_options)
+        options[:formats] = options[:formats] & Array.wrap(format_options).map(&:to_sym)
+      end
+      # Handle case when :as option was sent, but with no valid formats
+      if options[:formats].blank?
+        valid_formats = MakeExportable.exportable_formats.keys.map {|f| ":#{f}"}
+        raise MakeExportable::FormatNotFound.new("No valid export formats. Use: #{valid_formats.join(', ')}") 
       end
 
       # Determine the exportable columns, default to all columns and then
