@@ -211,8 +211,7 @@ module MakeExportable #:nodoc:
       # <tt>method_missing</tt> allows the class to accept dynamically named methods 
       # such as: SomeClass.to_xls_export(), SomeClass.create_csv_report()
       def method_missing(method_id, *arguments)
-        # TODO: Should this use all formats or just the ones in exportable_options?
-        possible_formats = exportable_options[:formats].join('|')
+        possible_formats = MakeExportable.exportable_formats.keys.map(&:to_s).join('|')
         if match = /^create_(#{possible_formats})_report$/.match(method_id.to_s)
           format = match.captures.first
           self.create_report(format, *arguments)
