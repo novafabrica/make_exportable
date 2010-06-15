@@ -168,8 +168,7 @@ module MakeExportable #:nodoc:
       options.reverse_merge!(exportable_options)
       options = self.process_only_and_except(:columns, options)
 
-      # For Rails 2.3 compatibility
-      collection = ActiveRecord::VERSION::MAJOR >= 3 ? self.scoped : self
+      collection = self
       options[:scopes].each do |scope|
         collection = collection.send(scope)
       end
