@@ -1,20 +1,19 @@
 require "active_record"
 
-$LOAD_PATH.unshift(File.dirname(__FILE__))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'nova_fabrica'))
 
-require 'nova_fabrica/make_exportable'
-require 'nova_fabrica/make_exportable_helper'
-require 'nova_fabrica/make_exportable_errors'
+require 'make_exportable'
+require 'make_exportable_helper'
+require 'make_exportable_errors'
 
-# TODO: make format loading dynamic & user editable
-require 'nova_fabrica/formats/exportable_format'
-require 'nova_fabrica/formats/csv'
-require 'nova_fabrica/formats/html'
-require 'nova_fabrica/formats/excel'
-require 'nova_fabrica/formats/tsv'
-require 'nova_fabrica/formats/xml'
-require 'nova_fabrica/formats/json'
-
+# TODO: make format loading dynamic
+require 'formats/exportable_format'
+require 'formats/csv'
+require 'formats/html'
+require 'formats/excel'
+require 'formats/tsv'
+require 'formats/xml'
+require 'formats/json'
 
 $LOAD_PATH.shift
 
