@@ -74,7 +74,13 @@ module MakeExportable #:nodoc:
       # Determine the exportable columns, default to all columns and then
       # remove columns using the :only and :except options
       options[:columns] = self.column_names.map(&:to_sym)
-      options = self.process_only_and_except(:columns, options)
+      if only_options = options.delete(:only)
+        options[:columns] = Array.wrap(only_options).map {|i| i.to_sym}
+      end
+      if except_options = options.delete(:except)
+        options[:columns] = options[:columns] - Array.wrap(except_options).map {|i| i.to_sym}
+      end
+
 
       options[:scopes] ||= []
 
@@ -91,21 +97,6 @@ module MakeExportable #:nodoc:
     # until <tt>make_exportable</tt> has been called on them.
     def exportable?(format=nil)
       return false
-    end
-
-    # TODO: move this out of ActiveRecord::Base
-    # MB where should we move this too?
-    def process_only_and_except(key, hash)
-      #If hash does not contain only or except will return the hash unmodulated.
-      if only_options = hash.delete(:only)
-        only_array = Array.wrap(only_options).map {|i| i.to_sym}
-        hash[key] = only_array
-      end
-      if except_options = hash.delete(:except)
-        except_array = Array.wrap(except_options).map {|i| i.to_sym}
-        hash[key] = hash[key] - except_array
-      end
-      return hash
     end
 
   end
@@ -166,7 +157,13 @@ module MakeExportable #:nodoc:
     #
     def get_export_data(options={})
       options.reverse_merge!(exportable_options)
-      options = self.process_only_and_except(:columns, options)
+
+      if only_options = options.delete(:only)
+        options[:columns] = Array.wrap(only_options).map {|i| i.to_sym}
+      end
+      if except_options = options.delete(:except)
+        options[:columns] = options[:columns] - Array.wrap(except_options).map {|i| i.to_sym}
+      end
 
       # apply scopes and then find options
       collection = self
@@ -195,7 +192,12 @@ module MakeExportable #:nodoc:
     def create_report(format, data_set=[], options={})
       validate_export_format(format)
       options.reverse_merge!(exportable_options)
-      options = self.process_only_and_except(:columns, options)
+      if only_options = options.delete(:only)
+        options[:columns] = Array.wrap(only_options).map {|i| i.to_sym}
+      end
+      if except_options = options.delete(:except)
+        options[:columns] = options[:columns] - Array.wrap(except_options).map {|i| i.to_sym}
+      end
       headers = options[:headers] || options[:columns].map(&:to_s)
       validate_data_lengths(data_set, headers)
       format_class = MakeExportable.exportable_formats[format.to_sym]

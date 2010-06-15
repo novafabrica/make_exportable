@@ -119,8 +119,8 @@ These are defaults which can still be overridden when you perform an export.
 
 MakeExportable also allows you to export to a format using a dynamic name.  Each export format gets two "magic methods".
 
-  <em>to_#{format}_export</em>
-  <em>create_#{format}_report</em>
+  to_#{format}_export
+  create_#{format}_report
 
 In both cases "format" represents the lowercase abbreviation for the export format (e.g. "to_csv_export", "create_csv_report"). Then the options hash becomes the first argument instead of the second.
 
