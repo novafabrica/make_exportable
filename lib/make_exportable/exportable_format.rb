@@ -10,8 +10,8 @@ module MakeExportable #:nodoc:
     class << self
       # Register this format with the mothership
       def register_format
-        unless MakeExportable::Core.exportable_formats[self.reference]
-          MakeExportable::Core.exportable_formats[self.reference] = self
+        unless MakeExportable.exportable_formats[self.reference]
+          MakeExportable.exportable_formats[self.reference] = self
         end
       end
 

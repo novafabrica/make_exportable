@@ -37,15 +37,6 @@ describe "Make Exportable" do
 
     end
 
-    describe "Module Helper Methods" do
-
-      it "should tell if a format is exportable" do
-        MakeExportable.exportable_format_supported?(:tsv).should be_true
-        MakeExportable.exportable_format_supported?(:unsupported).should_not be_true
-      end
-
-    end
-
     describe "making a class exportable" do
 
       before(:each) do
@@ -58,7 +49,7 @@ describe "Make Exportable" do
         MakeExportable.exportable_classes.should == {'User' => User}
       end
 
-      it "should include MakeExportable::Core's ClassMethods on class" do
+      it "should include MakeExportable's ClassMethods on class" do
         if ActiveRecord::VERSION::MAJOR >= 3
           User.methods.include?(:to_export).should be_true
           User.methods.include?(:get_export_data).should be_true
@@ -70,7 +61,7 @@ describe "Make Exportable" do
         end
       end
 
-      it "should include MakeExportable::Core's InstanceMethods on a class instance" do
+      it "should include MakeExportable's InstanceMethods on a class instance" do
         if ActiveRecord::VERSION::MAJOR >= 3
           User.instance_methods.include?(:export_attribute).should be_true
         else
