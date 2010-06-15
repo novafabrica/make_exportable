@@ -1,13 +1,13 @@
 require "active_record"
 
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'nova_fabrica'))
+$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), 'make_exportable'))
 
-require 'make_exportable'
+require 'core'
+require 'errors'
+require 'exportable_format'
 require 'make_exportable_helper'
-require 'make_exportable_errors'
 
 # TODO: make format loading dynamic
-require 'formats/exportable_format'
 require 'formats/csv'
 require 'formats/html'
 require 'formats/excel'
@@ -18,5 +18,5 @@ require 'formats/json'
 $LOAD_PATH.shift
 
 if defined?(ActiveRecord::Base)
-  ActiveRecord::Base.send :include, NovaFabrica::MakeExportable
+  ActiveRecord::Base.send :include, MakeExportable
 end

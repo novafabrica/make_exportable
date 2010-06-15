@@ -1,5 +1,5 @@
-module NovaFabrica #:nodoc:
-  module MakeExportable #:nodoc:
+module MakeExportable #:nodoc:
+  module Core #:nodoc:
 
     # Inventory of the exportable classes, stored in ActiveRecord::Base
     mattr_accessor :exportable_classes
@@ -58,7 +58,7 @@ module NovaFabrica #:nodoc:
       #
       def make_exportable(options={})
         # register the class as exportable
-        NovaFabrica::MakeExportable.exportable_classes[self.class_name] = self
+        MakeExportable::Core.exportable_classes[self.class_name] = self
 
         valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
                          :group, :having, :limit, :offset, :joins]
@@ -67,10 +67,10 @@ module NovaFabrica #:nodoc:
         # Determine the exportable formats, default to all registered formats
         # and remove formats using the :as option
         # TODO: make it impossible to provide no valid formats
-        options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys
+        options[:formats] = MakeExportable::Core.exportable_formats.keys
         if format_options = options.delete(:as)
-          raise NovaFabrica::MakeExportableErrors::ExportFault.new("At least one format much be set for as options") if format_options.blank?
-          options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys & Array.wrap(format_options)
+          raise MakeExportable::ExportFault.new("At least one format much be set for as options") if format_options.blank?
+          options[:formats] = MakeExportable::Core.exportable_formats.keys & Array.wrap(format_options)
         end
 
         # Determine the exportable columns, default to all columns and then
@@ -84,8 +84,8 @@ module NovaFabrica #:nodoc:
         write_inheritable_attribute :exportable_options, options
         class_inheritable_reader :exportable_options
 
-        extend NovaFabrica::MakeExportable::ClassMethods
-        include NovaFabrica::MakeExportable::InstanceMethods
+        extend MakeExportable::Core::ClassMethods
+        include MakeExportable::Core::InstanceMethods
 
       end
 
@@ -177,7 +177,7 @@ module NovaFabrica #:nodoc:
         validate_export_format(format)
         headers = options[:headers] || options[:columns].map(&:to_s)
         validate_data_lengths(data_set, headers)
-        format_class = NovaFabrica::MakeExportable.exportable_formats[format.to_sym]
+        format_class = MakeExportable::Core.exportable_formats[format.to_sym]
         formater = format_class.new(data_set, headers)
         return formater.generate, formater.mime_type
       end
@@ -201,11 +201,11 @@ module NovaFabrica #:nodoc:
         end
 
         def validate_export_format(format)
-          unless NovaFabrica::MakeExportable.exportable_formats.keys.include?(format.to_sym)
-            raise NovaFabrica::MakeExportableErrors::FormatNotFound.new("#{format} is not a supported format.")
+          unless MakeExportable::Core.exportable_formats.keys.include?(format.to_sym)
+            raise MakeExportable::FormatNotFound.new("#{format} is not a supported format.")
           end
           unless exportable_options[:formats].include?(format.to_sym)
-            raise NovaFabrica::MakeExportableErrors::FormatNotFound.new("#{format} format is not allowed on this class.")
+            raise MakeExportable::FormatNotFound.new("#{format} format is not allowed on this class.")
           end
         end
 
@@ -213,7 +213,7 @@ module NovaFabrica #:nodoc:
         def validate_data_lengths(data_set, data_headers=nil)
           row_length = !data_headers.blank? ? data_headers.size : data_set[0].size
           if data_set.any? {|row| row_length != row.size }
-            raise NovaFabrica::MakeExportableErrors::ExportFault.new("All rows must be the same length. (Are you setting the headers by hand?) (#{row_length} vs. #{data_set.first.size})")
+            raise MakeExportable::ExportFault.new("All rows must be the same length. (Are you setting the headers by hand?) (#{row_length} vs. #{data_set.first.size})")
           end
         end
 
@@ -241,6 +241,6 @@ module NovaFabrica #:nodoc:
       end
 
     end
-  end
 
+  end
 end

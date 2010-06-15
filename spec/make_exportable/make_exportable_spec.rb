@@ -6,33 +6,33 @@ describe "Make Exportable" do
     clean_database!
   end
 
-  describe NovaFabrica::MakeExportable do
+  describe MakeExportable do
 
     before(:each) do
       clean_database!
     end
 
     it "should have constants describing the different that can be exported" do
-      NovaFabrica::MakeExportable.exportable_formats.should_not be_nil
-      NovaFabrica::MakeExportable.exportable_formats.key?(:csv).should be_true
-      NovaFabrica::MakeExportable.exportable_formats.key?(:xls).should be_true
-      NovaFabrica::MakeExportable.exportable_formats.key?(:tsv).should be_true
-      NovaFabrica::MakeExportable.exportable_formats.key?(:xml).should be_true
-      NovaFabrica::MakeExportable.exportable_formats.key?(:html).should be_true
+      MakeExportable.exportable_formats.should_not be_nil
+      MakeExportable.exportable_formats.key?(:csv).should be_true
+      MakeExportable.exportable_formats.key?(:xls).should be_true
+      MakeExportable.exportable_formats.key?(:tsv).should be_true
+      MakeExportable.exportable_formats.key?(:xml).should be_true
+      MakeExportable.exportable_formats.key?(:html).should be_true
     end
 
     describe "mattr_accessors" do
 
       it "should module accessor for exportable tables that starts as an empty hash" do
-        NovaFabrica::MakeExportable.exportable_classes.should == {}
+        MakeExportable.exportable_classes.should == {}
       end
 
       it "should have a module accessor for supported types" do
-        NovaFabrica::MakeExportable.exportable_formats.include?(:csv).should be_true
-        NovaFabrica::MakeExportable.exportable_formats.include?(:xls).should be_true
-        NovaFabrica::MakeExportable.exportable_formats.include?(:tsv).should be_true
-        NovaFabrica::MakeExportable.exportable_formats.include?(:html).should be_true
-        NovaFabrica::MakeExportable.exportable_formats.include?(:xml).should be_true
+        MakeExportable.exportable_formats.include?(:csv).should be_true
+        MakeExportable.exportable_formats.include?(:xls).should be_true
+        MakeExportable.exportable_formats.include?(:tsv).should be_true
+        MakeExportable.exportable_formats.include?(:html).should be_true
+        MakeExportable.exportable_formats.include?(:xml).should be_true
       end
 
     end
@@ -40,8 +40,8 @@ describe "Make Exportable" do
     describe "Module Helper Methods" do
 
       it "should tell if a format is exportable" do
-        NovaFabrica::MakeExportable.exportable_format_supported?(:tsv).should be_true
-        NovaFabrica::MakeExportable.exportable_format_supported?(:unsupported).should_not be_true
+        MakeExportable.exportable_format_supported?(:tsv).should be_true
+        MakeExportable.exportable_format_supported?(:unsupported).should_not be_true
       end
 
     end
@@ -55,10 +55,10 @@ describe "Make Exportable" do
       end
 
       it "should include the class table into the exportable tables attribute" do
-        NovaFabrica::MakeExportable.exportable_classes.should == {'User' => User}
+        MakeExportable.exportable_classes.should == {'User' => User}
       end
 
-      it "should include NovaFabrica's ClassMethods on class" do
+      it "should include MakeExportable::Core's ClassMethods on class" do
         if ActiveRecord::VERSION::MAJOR >= 3
           User.methods.include?(:to_export).should be_true
           User.methods.include?(:get_export_data).should be_true
@@ -70,7 +70,7 @@ describe "Make Exportable" do
         end
       end
 
-      it "should include NovaFabrica's InstanceMethods on a class instance" do
+      it "should include MakeExportable::Core's InstanceMethods on a class instance" do
         if ActiveRecord::VERSION::MAJOR >= 3
           User.instance_methods.include?(:export_attribute).should be_true
         else
@@ -256,7 +256,7 @@ describe "Make Exportable" do
           it "should raise an FormatNotFound if the format is not supported" do
             lambda do
               User.create_report("NONSUPPORTED")
-            end.should raise_error(NovaFabrica::MakeExportableErrors::FormatNotFound)
+            end.should raise_error(MakeExportableErrors::FormatNotFound)
           end
 
           it 'should export an array of header and array of arrays of rows in the specified format' do
@@ -266,7 +266,7 @@ describe "Make Exportable" do
           it "should raise an ExportFault if the datasets are not all the same size" do
             lambda do
               User.create_report("csv", [[ "data", 'lovely data'],["more lovely data"]], :headers =>["Title", "Another Title"])
-            end.should raise_error(NovaFabrica::MakeExportableErrors::ExportFault)
+            end.should raise_error(MakeExportableErrors::ExportFault)
           end
 
         end
@@ -280,7 +280,7 @@ describe "Make Exportable" do
 
         describe "create_format_report" do
 
-          NovaFabrica::MakeExportable.exportable_formats.map do |format, v|
+          MakeExportable.exportable_formats.map do |format, v|
             it "should create the method create_#{format}_report" do
               User.should_receive(:create_report).with("#{format}")
               User.send("create_#{format}_report")
@@ -298,7 +298,7 @@ describe "Make Exportable" do
 
         describe "to_format_export" do
 
-          NovaFabrica::MakeExportable.exportable_formats.map do |format, v|
+          MakeExportable.exportable_formats.map do |format, v|
             it "should create the method to_#{format}_export" do
               User.should_receive(:to_export).with("#{format}")
               User.class_eval("to_#{format}_export")
