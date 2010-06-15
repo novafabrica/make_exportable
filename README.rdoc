@@ -1,10 +1,9 @@
-= MakeExportable
+=MakeExportable
 
 MakeExportable is a Rails gem/plugin to assist in exporting application data in a variety of formats. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns.
 
 
-Supported Formats 
------------------
+==Supported Formats 
 
 * CSV: Comma-separated values
 * TSV: Tab-separated values
@@ -14,15 +13,13 @@ Supported Formats
 * HTML: Hypertext markup language
 	
 	
-Installation
-------------
+==Installation
   
 * gem - sudo gem install make_exportable
 * plugin - script/plugin install git@github.com:novafabrica/make_exportable.git
 
 
-Basic Usage
------------
+==Basic Usage
 
 To start using MakeExportable simply add a call to <em>make_exportable</em> in any class you want to use for exporting data.
 
@@ -65,8 +62,7 @@ Then in a controller, you can use the <em>send_data</em> method to send the expo
   end
 
 
-Attributes and Methods
-----------------------
+==Attributes and Methods
 
 MakeExportable doesn't just export attributes that have database columns. It can also export data returned from methods.
 
@@ -100,8 +96,7 @@ If you want an attribute to be handled differently whenever it is exported, you 
   end
 
 
-Setting Export Defaults
------------------------
+==Setting Export Defaults
 
 If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class.  These are defaults which can still be overridden when you perform an export.
 
@@ -118,8 +113,7 @@ If you have a general columns, scopes, and conditions you will be calling in mul
   end
 
 
-Magic Methods
--------------
+==Magic Methods
 
 MakeExportable also allows you to export to a format using a dynamic name.  Each export format gets two "magic methods".
 
@@ -132,8 +126,8 @@ In both cases "format" represents the lowercase abbreviation for the export form
   Customer.visible.to_csv_export(:only => [:username, :email])
 
 
-Reports From Other Data
------------------------
+==Reports From Other Data
+
 If you just have some data you want to export in the right format, MakeExportable exposes the <em>create_report</em> method to use your own data set.
 
   Customer.create_report("csv", [row1_array, row2_array, row3_array], {:headers => headers_array})
@@ -141,7 +135,7 @@ If you just have some data you want to export in the right format, MakeExportabl
 Just pass in the format and an ordered array of rows for the data set.  You can also pass in an array of headers as :headers in the options hash.  Remember the row size and the header size need to be the same. 
 
 
-== INFO
+==Info
   
 Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.
 
@@ -150,12 +144,13 @@ License: Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICEN
 GitHub: http://github.com/novafabrica/make_exportable/tree/master
 
 
-Bug Reports and Feedback
-------------------------
+==Bug Reports and Feedback
+
 Bug reports should be submitted at https://github.com/novafabrica/make_exportable/issues
 
 Other feedback is welcomed at info@novafabrica.com
 
-Warranty
---------
+
+==Warranty
+
 This software is provided "as is" and without any express or implied warranties, including, without limitation, the implied warranties of merchantability and fitness for a particular purpose.
