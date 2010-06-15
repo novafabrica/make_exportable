@@ -149,22 +149,25 @@ module MakeExportable #:nodoc:
     # Example:  User.to_xml_export(:columns => [:first_name, :last_name, :username])
     #
     def to_export(format, options={})
-      options.reverse_merge!(exportable_options.slice([:only, :except]))
-      options = self.process_only_and_except(:columns, options)
       data_set = self.get_export_data(options)
       return self.create_report(format, data_set, options)
     end
 
     # <tt>get_export_data</tt> is a class method that finds all objects of a given
-    # class fitting the options passed into it and outputs an ordered array of arrays
-    # containing data to be used with create_report. Valid options include :only, :except, 
-    # :scopes, and standard find options. See <tt>to_export</tt> for more details on the options.
+    # class using the options passed in and outputs an ordered array of arrays
+    # containing data to be used as columns of data with create_report. Valid options 
+    # include :only, :except, :scopes, and standard find options. 
+    # See <tt>to_export</tt> for more details on the available options.
+    # 
+    # Example:
+    #
+    #   User.get_export_data(:columns => [:first_name, :last_name, :username])
+    #   #> [['John', 'Doe', 'johndoe'], ['Joe', 'Smith', 'jsmith']]
+    #
     def get_export_data(options={})
-      # TODO: should move merging, :only and :except processing from to_export to here.
-      
       options.reverse_merge!(exportable_options)
-      find_options = options.slice(:conditions, :order, :include, :group, :having,
-                                   :limit, :offset, :joins)
+      options = self.process_only_and_except(:columns, options)
+
       # For Rails 2.3 compatibility
       collection = ActiveRecord::VERSION::MAJOR >= 3 ? self.scoped : self
       options[:scopes].each do |scope|
@@ -172,6 +175,8 @@ module MakeExportable #:nodoc:
       end
       # For Rails 2.3 compatibility
       if ActiveRecord::VERSION::MAJOR >= 3
+        find_options = options.slice(:conditions, :order, :include, :group, :having,
+                                     :limit, :offset, :joins)
         collection = collection.find(:all, find_options)
       else
         collection = collection.all
@@ -189,6 +194,8 @@ module MakeExportable #:nodoc:
     # which will be used as headers for the columns in the data_set.
     def create_report(format, data_set=[], options={})
       validate_export_format(format)
+      options.reverse_merge!(exportable_options)
+      options = self.process_only_and_except(:columns, options)
       headers = options[:headers] || options[:columns].map(&:to_s)
       validate_data_lengths(data_set, headers)
       format_class = MakeExportable.exportable_formats[format.to_sym]
@@ -202,6 +209,7 @@ module MakeExportable #:nodoc:
       # <tt>method_missing</tt> allows the class to accept dynamically named methods 
       # such as: SomeClass.to_xls_export(), SomeClass.create_csv_report()
       def method_missing(method_id, *arguments)
+        # TODO: Should this use all formats or just the ones in exportable_options?
         possible_formats = exportable_options[:formats].join('|')
         if match = /^create_(#{possible_formats})_report$/.match(method_id.to_s)
           format = match.captures.first
