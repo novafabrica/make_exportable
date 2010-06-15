@@ -1,4 +1,3 @@
-# TODO: am I sure this is requiring the right CSV?
 require "csv"
 # for compatibility with Rails 2
 require 'fastercsv' if CSV.const_defined?(:Reader)

@@ -54,15 +54,14 @@ module NovaFabrica #:nodoc:
       #   end
       #
       # The method allows for fine controll of how the class will be defaultly exported via a hash
-      # 
-      # These options include 
+      #
+      # These options include
       # * :only and :except - assigns which columns you would like to export.
       # * :scopes - pass in an array of scopes to be attached to the Class before export
-      # * :headers - override the default headers for the exported attributes. Accepts a empty string
       # * :as - specifies the default format to export as
       #
-      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
-      # This will be depricated in future version 
+      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment.
+      # This will be depricated in future version
       #
       # Examples:
       #
@@ -83,15 +82,15 @@ module NovaFabrica #:nodoc:
         NovaFabrica::MakeExportable.exportable_classes[self.class_name] = self
 
         valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
-                         :group, :having, :limit, :offset, :joins, :headers]
+                         :group, :having, :limit, :offset, :joins]
         options.slice!(*valid_options)
 
         # Determine the exportable formats, default to all registered formats
         # and remove formats using the :as option
         # TODO: make it impossible to provide no valid formats
-        # TODO Formats does nothing yet
         options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys
         if format_options = options.delete(:as)
+          raise NovaFabrica::MakeExportableErrors::ExportFault.new("At least one format much be set for as options") if format_options.blank?
           options[:formats] = NovaFabrica::MakeExportable.exportable_formats.keys & Array.wrap(format_options)
         end
 
@@ -116,6 +115,7 @@ module NovaFabrica #:nodoc:
       end
 
       # TODO: move this out of ActiveRecord::Base
+      # MB where should we move this too?
       def process_only_and_except(key, hash)
         #If hash does not contain only or except will return the hash unmodulated.
         if only_options = hash.delete(:only)
@@ -145,13 +145,13 @@ module NovaFabrica #:nodoc:
       # It takes for it's arguments the format you wish to use, and an option hash.
       #
       # The method allows for fine controll of how the class will be defaultly exported via a hash
-      # 
-      # These options include 
+      #
+      # These options include
       # * :only and :except - assigns which columns you would like to export.
       # * :scopes - pass in an array of scopes to be attached to the Class before export
       # * :headers - override the default headers for the exported attributes. Accepts a empty string
       #
-      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
+      # For capatibility with Rails 2.3 we allow any option found in the find option at the moment.
       # This will be depricated in future version
       #
       # User.to_export('xml', :columns => [:first_name, :last_name, :username])
@@ -180,12 +180,12 @@ module NovaFabrica #:nodoc:
           collection = collection.send(scope)
         end
         #For rails 2.3 capatibility
-        if ActiveRecord::VERSION::MAJOR >= 3 
+        if ActiveRecord::VERSION::MAJOR >= 3
           collection = collection.find(:all, find_options)
         else
           collection = collection.all
         end
-        
+
         rows = collection.map do |item|
           options[:columns].map {|col| item.export_attribute(col) }
         end

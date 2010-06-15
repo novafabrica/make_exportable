@@ -38,7 +38,7 @@ You can specify which formats you want to use in your class using the :as option
 
 To export your model's data you can simply call the class method <em>to_export</em>
 
-  Customer.to_export("csv", :only => ['first_name', 'last_name'])
+  Customer.to_export("csv")
 
 <em>to_export</em> returns an array containing the data in CSV format and the appropriate mime-type for easy file sending.
 
@@ -48,7 +48,7 @@ You can easily switch the format by substituting 'csv' for your desired format.
 
 It also allows you to send finder options to the class. 
 
-  Customer.to_export("xml", :columns => ['first_name', 'last_name'], :conditions => {:last_name => "smith"}, :order => "DESC")
+  Customer.to_export("xml", :only => ['first_name', 'last_name'], :conditions => {:last_name => "smith"}, :order => "DESC")
 
 and can be attached to a scope on the Given Class
  
@@ -88,35 +88,40 @@ If you just have some data (such as an array or hash) you want to export, MakeEx
   Customer.create_report_for("csv", [headers], [[row1], [row2], [row3]])
 
 Just send the format, the column headers and an ordered array of rows.
+Remember the row size and the header size need to be the same. 
 
-Additional Methods
+Defaults
 ------------------
 
 If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class. 
 
- * as - array of columns names and methods to be exported. 
- This defaults to all columns minus salt and hashed_password and password
- * scopes - scopes to be used on the Class before exports
- * finder_options - Find options for backwards capability with rails 2
+* as - The acceptable formats to export as 
+* only & except - This defaults to all columns if no defaults are given
+* scopes - scopes to be used on the Class before exports
+
+For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
+This will be depricated in future version
 
   class Customer < ActiveRecord::Base
     make_exportable :finder_options => {:order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
   end
   
   class Customer < ActiveRecord::Base
-    make_exportable :columns => [:id, :username, :full_name]
+    make_exportable :only => [:id, :username, :full_name]
   end
    
   class Customer < ActiveRecord::Base
     make_exportable :scopes => [:new_signups, :with_referals]
   end
   
-For ease of use MakeExportable dynamically adds a few useful methods. Each export format gets three "magic methods".
+Magic Methods
+------------------
+  
+For ease of use MakeExportable dynamically adds a few useful methods. Each export format gets two "magic methods".
 
-<em>to_csv_export</em>, where "format" is the export format (as in "to_csv_report"), which calls **to\_export(format)**.
+<em>to_format_export</em>, where "format" is the export format (as in "to_csv_export").
 
-<em>create_format_for</em> (and <em>create_format_report</em>), where "format" is the export format (as in "create_csv_report"/"to_csv_export"), which calls <em>create_format_report</em>.
-
+<em>create_format_report</em>), where "format" is the export format (as in "create_csv_report")
 
 Example
 -------
