@@ -168,16 +168,17 @@ module MakeExportable #:nodoc:
       options.reverse_merge!(exportable_options)
       options = self.process_only_and_except(:columns, options)
 
+      # apply scopes and then find options
       collection = self
       options[:scopes].each do |scope|
         collection = collection.send(scope)
       end
       # For Rails 2.3 compatibility
-      if ActiveRecord::VERSION::MAJOR >= 3
-        find_options = options.slice(:conditions, :order, :include, :group, :having,
-                                     :limit, :offset, :joins)
+      if ActiveRecord::VERSION::MAJOR < 3
+        find_options = options.slice(:conditions, :order, :include, :group, :having, :limit, :offset, :joins)
         collection = collection.find(:all, find_options)
       else
+        # they should not be sending find options anymore, so we don't support them
         collection = collection.all
       end
 
