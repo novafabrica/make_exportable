@@ -14,46 +14,48 @@ module MakeExportable #:nodoc:
 
   module ActiveRecordBaseMethods
 
-    # <tt>make_exportable</tt> is a generic method that when used in a class  it will
-    # * include the MakeExporable Module
-    # * Extend the class methods by the MakeExportable::ClassMethods
-    # * Include the MakeExportable::InstanceMethods on the class Instances
-    # * Add a class accessor called exportable_options to hold Find options to be applied to the to_export method
+    # <tt>make_exportable</tt> is an ActiveRecord method that, when called, add 
+    # methods to a particular class to make exporting data from that class easier.
     #
     # Example:
     #
     #   class Customer < ActiveRecord::Base
     #     make_exportable
     #   end
+    #   Customer.to_export(:csv)
     #
-    # The method allows for fine controll of how the class will be defaultly exported via a hash
+    # An optional hash of options can be passed as an argument to establish the default 
+    # export parameters.
     #
-    # These options include
-    # * :only and :except - assigns which columns you would like to export.
-    # * :scopes - pass in an array of scopes to be attached to the Class before export
-    # * :as - specifies the default format to export as
-    #
-    # For capatibility with Rails 2.3 we allow any option found in the find option at the moment.
-    # This will be depricated in future version
+    # These options include:
+    # * :only and :except - specify columns or methods to export (defaults to all columns)
+    # * :as - specify formats to allow for exporting (defaults to all formats)
+    # * :scopes - specify scopes to be called on the class before exporting
+    # * find options - for Rails 2.3 and earlier compatibility, standard find options 
+    #     are supported (:conditions, :order, :limit, :offset, etc.). These will be deprecated 
+    #     and removed in future versions.
     #
     # Examples:
-    #
-    #   class Customer < ActiveRecord::Base
-    #     make_exportable :order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
-    #   end
     #
     #   class Customer < ActiveRecord::Base
     #     make_exportable :only => [:id, :username, :full_name]
     #   end
     #
     #   class Customer < ActiveRecord::Base
-    #     make_exportable :scopes => [:new_signups, :with_referals]
+    #     make_exportable :except => [:id, :password], :scopes => [:new_signups, :with_referals], 
+    #                     :as => [:csv, :tsv, :xls]
+    #   end
+    #
+    #   class Customer < ActiveRecord::Base
+    #     make_exportable :conditions => {:active => true}, :order => 'last_name ASC, first_name ASC',
+    #                     :as => [:json, :html, :xml]
     #   end
     #
     def make_exportable(options={})
       # register the class as exportable
       MakeExportable.exportable_classes[self.class_name] = self
 
+      # remove any invalid options
       valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
                        :group, :having, :limit, :offset, :joins]
       options.slice!(*valid_options)
@@ -76,7 +78,7 @@ module MakeExportable #:nodoc:
 
       options[:scopes] ||= []
 
-      # exportable options are :formats, :columns, :scopes
+      # exportable options will be :formats, :columns, :scopes
       write_inheritable_attribute :exportable_options, options
       class_inheritable_reader :exportable_options
 
@@ -85,6 +87,8 @@ module MakeExportable #:nodoc:
 
     end
 
+    # <tt>exportable?</tt> returns false for all ActiveRecord classes
+    # until <tt>make_exportable</tt> has been called on them.
     def exportable?(format=nil)
       return false
     end
@@ -108,33 +112,42 @@ module MakeExportable #:nodoc:
 
   module ClassMethods
 
-    # With no argument, returns true if the class has "make_exportable"
-    # With a format as an argument, returns true if the format is enabled
-    # for this class
+    # <tt>exportable?<?tt> returns true if the class has called "make_exportable".
+    # This is overriding the default :exportable? in ActiveRecord::Base which 
+    # always returns false.
+    # If a format is passed as an argument, returns true only if the format is 
+    # allowed for this class.
     def exportable?(format=nil)
       return exportable_options[:formats].include?(format.to_sym) if format
       return true
     end
 
-    # <tt>to_export</tt> is a generic class method to allow you to simply export all records for an entire class.
-    # It takes for it's arguments the format you wish to use, and an option hash.
+    # <tt>to_export</tt> is a class method to export all records of a class. It can be called 
+    # directly on an ActiveRecord class, but it can also be called on an ActiveRelation scope.
+    # It takes two arguments: a format (required) and a hash of options (optional).
     #
-    # The method allows for fine controll of how the class will be defaultly exported via a hash
+    # The options include:
+    # * :only and :except - specify columns or methods to export
+    # * :scopes - specify scopes to be called on the class before exporting
+    # * find options - for Rails 2.3 and earlier compatibility, standard find options 
+    #     are supported (:conditions, :order, :limit, :offset, etc.). These will be deprecated 
+    #     and removed in future versions.
+    # * :headers - supply an array of custom headers for the columns of exported attributes, 
+    #     the sizes of the header array and the exported columns must be equal.
+    #   
+    # Examples:
     #
-    # These options include
-    # * :only and :except - assigns which columns you would like to export.
-    # * :scopes - pass in an array of scopes to be attached to the Class before export
-    # * :headers - override the default headers for the exported attributes. Accepts a empty string
+    #   User.to_export(:xml, :columns => [:first_name, :last_name, :username], 
+    #      :order => 'users.last_name ASC')
     #
-    # For capatibility with Rails 2.3 we allow any option found in the find option at the moment.
-    # This will be depricated in future version
+    #   User.visible.sorted_by_username.to_export('csv', 
+    #      :only => [:first_name, :last_name, :username])
     #
-    # User.to_export('xml', :columns => [:first_name, :last_name, :username])
+    # As a convenience, you can also use "dynamically-named methods" and include the format 
+    # in the method name instead of providing it the first argument.
     #
+    # Example:  User.to_xml_export(:columns => [:first_name, :last_name, :username])
     #
-    # Finer Controller:
-    #
-    # User.order_by_username.to_export('csv', :only =>  [:first_name, :last_name, :username])
     def to_export(format, options={})
       options.reverse_merge!(exportable_options.slice([:only, :except]))
       options = self.process_only_and_except(:columns, options)
@@ -142,19 +155,22 @@ module MakeExportable #:nodoc:
       return self.create_report(format, data_set, options)
     end
 
-    # <tt>get_export_data</tt> is a generic class method that finds all objects of a given
+    # <tt>get_export_data</tt> is a class method that finds all objects of a given
     # class fitting the options passed into it and outputs an ordered array of arrays
-    # containing the objects data to be used with create_report for
+    # containing data to be used with create_report. Valid options include :only, :except, 
+    # :scopes, and standard find options. See <tt>to_export</tt> for more details on the options.
     def get_export_data(options={})
+      # TODO: should move merging, :only and :except processing from to_export to here.
+      
       options.reverse_merge!(exportable_options)
       find_options = options.slice(:conditions, :order, :include, :group, :having,
                                    :limit, :offset, :joins)
-      #For rails 2.3 capatibility
+      # For Rails 2.3 compatibility
       collection = ActiveRecord::VERSION::MAJOR >= 3 ? self.scoped : self
       options[:scopes].each do |scope|
         collection = collection.send(scope)
       end
-      #For rails 2.3 capatibility
+      # For Rails 2.3 compatibility
       if ActiveRecord::VERSION::MAJOR >= 3
         collection = collection.find(:all, find_options)
       else
@@ -167,8 +183,10 @@ module MakeExportable #:nodoc:
       return rows
     end
 
-    # <tt>create_report</tt> is a generic class method to allow you to export data in a easy to describe manner.
-    # It takes for it's arguments the format you wish to use, the array headers for each column you wish to export and the exportable rows as described as arrays inside of an array
+    # <tt>create_report</tt> is a class method to create a report from a set of data.
+    # It takes three arguments: a format (required), the data set to use for the report (required),
+    # and a hash of options (optional).  The only meaningful options are :columns and :headers either of 
+    # which will be used as headers for the columns in the data_set.
     def create_report(format, data_set=[], options={})
       validate_export_format(format)
       headers = options[:headers] || options[:columns].map(&:to_s)
@@ -181,8 +199,8 @@ module MakeExportable #:nodoc:
 
     private
 
-      # method_missing allows the class to accept dynamically named methods
-      # such as: SomeClass.create_csv_report(), SomeClass.to_xls_export()
+      # <tt>method_missing</tt> allows the class to accept dynamically named methods 
+      # such as: SomeClass.to_xls_export(), SomeClass.create_csv_report()
       def method_missing(method_id, *arguments)
         possible_formats = exportable_options[:formats].join('|')
         if match = /^create_(#{possible_formats})_report$/.match(method_id.to_s)
@@ -196,6 +214,7 @@ module MakeExportable #:nodoc:
         end
       end
 
+      # <tt>validate_export_format</tt> ensures that the requested export format is valid.
       def validate_export_format(format)
         unless MakeExportable.exportable_formats.keys.include?(format.to_sym)
           raise MakeExportable::FormatNotFound.new("#{format} is not a supported format.")
@@ -205,11 +224,12 @@ module MakeExportable #:nodoc:
         end
       end
 
-      # NoSQL makes this important
+      # <tt>validate_data_lengths</tt> ensures that the headers and all data rows are of the 
+      # same size. (This is an important data integrity check if you are using NoSQL.)
       def validate_data_lengths(data_set, data_headers=nil)
         row_length = !data_headers.blank? ? data_headers.size : data_set[0].size
         if data_set.any? {|row| row_length != row.size }
-          raise MakeExportable::ExportFault.new("All rows must be the same length. (Are you setting the headers by hand?) (#{row_length} vs. #{data_set.first.size})")
+          raise MakeExportable::ExportFault.new("Headers and all rows in the data set must be the same size.")
         end
       end
 
