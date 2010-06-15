@@ -8,12 +8,12 @@ require 'exportable_format'
 require 'make_exportable_helper'
 
 # TODO: make format loading dynamic
-require 'formats/csv'
-require 'formats/html'
-require 'formats/excel'
-require 'formats/tsv'
-require 'formats/xml'
-require 'formats/json'
+require 'exportable_formats/csv'
+require 'exportable_formats/html'
+require 'exportable_formats/excel'
+require 'exportable_formats/tsv'
+require 'exportable_formats/xml'
+require 'exportable_formats/json'
 
 $LOAD_PATH.shift
 
