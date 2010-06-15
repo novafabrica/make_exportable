@@ -245,13 +245,16 @@ module MakeExportable #:nodoc:
 
   module InstanceMethods
 
-    # <tt>export_attribute</tt> returns the export value of an attribute.
-    # By default, this is simply the value of the attribute itself, but the
-    # value can be overridden in the model by defining a method called
-    # "#{keyword}_export" where keyword can be either an attribute that
-    # needs an alternative export value (for example, returning a formatted
-    # date instead of the MySQL value) or can be any keyword that returns
-    # any value (such as "last_transaction", "order_total", etc.)
+    # <tt>export_attribute</tt> returns the export value of an attribute or method.
+    # By default, this is simply the value of the attribute or method itself, 
+    # but the value can be permanently overridden with another value by defining 
+    # a method called "#{attribute}_export". The alternate method will *always* 
+    # be called in place of the original one. At a minimum, this is useful 
+    # when a date should be formatted when exporting or when booleans should  
+    # always export as "Yes"/"No".  But it can do more, performing any amount of 
+    # processing or additional queries, as long as in the end it returns a value 
+    # for the export to use.
+    # Sending an attribute name that does not exist will return an empty string.
     def export_attribute(attribute)
       begin
         if self.respond_to?("#{attribute}_export")

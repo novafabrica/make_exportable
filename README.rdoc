@@ -1,26 +1,28 @@
 = MakeExportable
 
-MakeExportable is a Rails gem/plugin that makes exporting your model's data effortless. It works in a variety of formats and can filter down what gets exported using ActiveRecord's find method.
+MakeExportable is a Rails gem/plugin to assist in exporting application data in a variety of formats. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns.
+
 
 Supported Formats 
 -----------------
-At the moment MakeExportable supports
 
 * CSV: Comma-separated values
-* TSV: Tab-seperated values
+* TSV: Tab-separated values
 * XLS: Excel Spreadsheet
+* JSON: JavaScript Object Notation
 * XML: Extensible markup language
 * HTML: Hypertext markup language
-* JSON: JavaScript Object Notation
 	
-INSTALLATION
--------------
+	
+Installation
+------------
   
 * gem - sudo gem install make_exportable
 * plugin - script/plugin install git@github.com:novafabrica/make_exportable.git
 
-Usage
------
+
+Basic Usage
+-----------
 
 To start using MakeExportable simply add a call to <em>make_exportable</em> in any class you want to use for exporting data.
 
@@ -28,123 +30,115 @@ To start using MakeExportable simply add a call to <em>make_exportable</em> in a
     make_exportable 
   end
 
-This includes the MakeExportable module in your class and gives your class access to MakeExportable's methods. 
-
-You can specify which formats you want to use in your class using the :as option.
-
-  class Customer < ActiveRecord::Base
-    make_exportable :as => [:csv, xml]
-  end
-
-To export your model's data you can simply call the class method <em>to_export</em>
+To export data you simply call the class method <em>to_export</em> and specify your desired format (see supported formats above).
 
   Customer.to_export("csv")
 
-<em>to_export</em> returns an array containing the data in CSV format and the appropriate mime-type for easy file sending.
+You can select the columns you want to return using the :only and :except options.  The default is to export all columns.
 
-You can easily switch the format by substituting 'csv' for your desired format. 
-
-  Customer.to_export("xml", :only => ['first_name', 'last_name'])
-
-It also allows you to send finder options to the class. 
-
-  Customer.to_export("xml", :only => ['first_name', 'last_name'], :conditions => {:last_name => "smith"}, :order => "DESC")
-
-and can be attached to a scope on the Given Class
- 
-  Customer.recent.to_export(:csv)
- 
-<em>to_export</em> also allows scopes to be passed in as an array in the options hash
+  Customer.to_export("csv", :only => [:first_name, :last_name, :email])
+  Customer.to_export("csv", :except => [:hashed_password, :salt])
   
-  Customer.to_export(:csv, :scopes => ['recent'])
+You can change the result set by passing in an array of :scopes to call, you can pass in finder options (such as :conditions, :order, :limit, :offset, etc.), or you can call <em>to_export</em> on a class that has already been scoped using named scopes.
 
-MakeExportable doesn't just export database columns. It can also export data returned from methods.
+  Customer.to_export(:xls, :scopes => ["approved", "sorted"])
+  Customer.to_export(:xls, :conditions => {:approved => true}, :order => "first_name ASC", :limit => 50)
+  Customer.visible.where(:approved => true).to_export(:xls)
 
-  class Customer < ActiveRecord::Base
-    make_exportable 
+<em>to_export</em> returns an array of the data in the specified format and the corresponding mime-type.  This is done to make sending files easy.
 
-    def full_name
-      "#{first_name} #{last_name}"
-    end
-    
-  end
+  ["First Name,Last Name,Email\nJohn,Doe,x@x.com\nJoe,Smith,y@y.com\n", "text/csv; charset=utf-8; header=present"]
 
-  Customer.to_export("csv", :only => ['full_name'])
-
-If you want an attribute to be handled differently when exported, you can define a method with the syntax <em>name_of_attribute_export</em> which will be called when exporting instead of the regular attribute.
-
-  class Customer < ActiveRecord::Base
-    make_exportable 
-
-    def first_name_export
-      first_name.capitalize
-    end
-
-  end
-
-
-If you just have some data (such as an array or hash) you want to export, MakeExportable can do that also with the <em>create_report_for</em> method
-
-  Customer.create_report_for("csv", [headers], [[row1], [row2], [row3]])
-
-Just send the format, the column headers and an ordered array of rows.
-Remember the row size and the header size need to be the same. 
-
-Defaults
-------------------
-
-If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class. 
-
-* as - The acceptable formats to export as 
-* only & except - This defaults to all columns if no defaults are given
-* scopes - scopes to be used on the Class before exports
-
-For capatibility with Rails 2.3 we allow any option found in the find option at the moment. 
-This will be depricated in future version
-
-  class Customer < ActiveRecord::Base
-    make_exportable :finder_options => {:order => 'last_name ASC, first_name ASC', :conditions => {:active => true}}
-  end
-  
-  class Customer < ActiveRecord::Base
-    make_exportable :only => [:id, :username, :full_name]
-  end
-   
-  class Customer < ActiveRecord::Base
-    make_exportable :scopes => [:new_signups, :with_referals]
-  end
-  
-Magic Methods
-------------------
-  
-For ease of use MakeExportable dynamically adds a few useful methods. Each export format gets two "magic methods".
-
-<em>to_format_export</em>, where "format" is the export format (as in "to_csv_export").
-
-<em>create_format_report</em>), where "format" is the export format (as in "create_csv_report")
-
-Example
--------
+Then in a controller, you can use the <em>send_data</em> method to send the export as a downloadable file to the user's browser.
 
   class CustomerController < ApplicationController
 
     def export
-      format = 'csv'
-      columns = ['first_name', 'last_name', 'city', 'state', 'email']
-      options = {:conditions => "active = 1"}
-      export_data, data_type = Customer.to_export(format, columns, options)
+      # Export the data
+      options = {:only => [:first_name, :last_name, :city, :country, :email]}
+      export_data, data_type = Customer.visible.to_export('csv', options)
 
       # Send data to user as file
-      file_name = "customer_export.#{format}"
-      send_data export_data, 
-      {
-        :type => data_type, 
-        :disposition => 'attachment', 
-        :filename => file_name 
-      }
+      send_data(export_data, { :type => data_type, :disposition => 'attachment', :filename => "customer_export.csv" })
     end
 
   end
+
+
+Attributes and Methods
+----------------------
+
+MakeExportable doesn't just export attributes that have database columns. It can also export data returned from methods.
+
+  class Customer < ActiveRecord::Base
+    make_exportable 
+    
+    def full_name
+      "#{first_name} #{last_name}"
+    end
+    
+    def last_purchase
+      last_order = orders.order('created_at ASC').last
+      return last_order ? last_order.created_at : ''
+    end
+  end
+
+  Customer.to_export("csv", :only => [:full_name, :email, :last_purchase])
+
+If you want an attribute to be handled differently whenever it is exported, you can define a method with the syntax <em>#{attribute}_export</em> which will be called when exporting instead of the regular attribute.
+
+  class Customer < ActiveRecord::Base
+    make_exportable 
+
+    def visible_export
+      visible ? 'Visible' : 'Not Visible'
+    end
+    
+    def updated_at_export
+      updated_at.to_s(:long)
+    end
+  end
+
+
+Setting Export Defaults
+-----------------------
+
+If you have a general columns, scopes, and conditions you will be calling in multiple methods you can attach them to the <em>make_exportable</em> method as defaults when including it into your class.  These are defaults which can still be overridden when you perform an export.
+
+* :only and :except - specify columns or methods to export (defaults to all columns)
+* :as - specify formats to allow for exporting (defaults to all formats)
+* :scopes - specify scopes to be called on the class before exporting
+
+  class Customer < ActiveRecord::Base
+    make_exportable :as => [:csv, :tsv], :only => [:first_name, :last_name, :email], :scopes => ['visible', 'recent']
+  end
+
+  class User < ActiveRecord::Base
+    make_exportable :except => [:hashed_password, :salt]
+  end
+
+
+Magic Methods
+-------------
+
+MakeExportable also allows you to export to a format using a dynamic name.  Each export format gets two "magic methods".
+
+<em>to_#{format}_export</em>
+<em>create_#{format}_report</em>
+
+In both cases "format" represents the lowercase abbreviation for the export format (e.g. "to_csv_export", "create_csv_report"). Then the options hash becomes the first argument instead of the second.
+
+  Customer.to_csv_export(:conditions => {:visible => true}, :order => "last_name ASC")
+  Customer.visible.to_csv_export(:only => [:username, :email])
+
+
+Reports From Other Data
+-----------------------
+If you just have some data you want to export in the right format, MakeExportable exposes the <em>create_report</em> method to use your own data set.
+
+  Customer.create_report("csv", [row1_array, row2_array, row3_array], {:headers => headers_array})
+
+Just pass in the format and an ordered array of rows for the data set.  You can also pass in an array of headers as :headers in the options hash.  Remember the row size and the header size need to be the same. 
 
 
 == INFO
@@ -153,11 +147,14 @@ Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.
 
 License: Copyright 2010 by Kevin Skoglund. released under the attached MIT-LICENSE. 
 
-GitHub: http://github.com/Novafabrica/make_exportable/tree/master
+GitHub: http://github.com/novafabrica/make_exportable/tree/master
 
-BUG REPORTS & FEEDBACK
-----------------------
-Bug reports and feedback are welcomed at info@novafabrica.com
+
+Bug Reports and Feedback
+------------------------
+Bug reports should be submitted at https://github.com/novafabrica/make_exportable/issues
+
+Other feedback is welcomed at info@novafabrica.com
 
 Warranty
 --------
