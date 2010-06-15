@@ -7,13 +7,10 @@ require 'errors'
 require 'exportable_format'
 require 'make_exportable_helper'
 
-# TODO: make format loading dynamic
-require 'exportable_formats/csv'
-require 'exportable_formats/html'
-require 'exportable_formats/excel'
-require 'exportable_formats/tsv'
-require 'exportable_formats/xml'
-require 'exportable_formats/json'
+Dir.foreach(File.join(File.dirname(__FILE__), 'make_exportable', 'exportable_formats')) do |file|
+  next unless File.extname(file) == '.rb'
+  require File.join('exportable_formats', File.basename(file, '.rb'))
+end
 
 $LOAD_PATH.shift
 
