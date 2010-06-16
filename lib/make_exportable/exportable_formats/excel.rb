@@ -5,6 +5,8 @@ module MakeExportable #:nodoc:
     self.name      = 'Excel'
     self.register_format
     
+    attr_accessor :data_set, :data_headers
+    
     def initialize(data_set, data_headers=[])
       self.long      = 'Microsoft Excel'
       self.mime_type = 'application/vnd.ms-excel; charset=utf-8;'

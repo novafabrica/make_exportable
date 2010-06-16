@@ -219,25 +219,25 @@ describe "Make Exportable" do
         describe "get_export_data" do
 
           it "should create order array of arrays of ordered column data" do
-            User.get_export_data(:columns => [:first_name, :last_name]).should == [["user_1", "Doe"], ["user_2", "Doe"]]
+            User.get_export_data(:only => [:first_name, :last_name]).should == [["user_1", "Doe"], ["user_2", "Doe"]]
           end
 
           it "should chainable on named_scopes" do
-            User.a_limiter.get_export_data(:columns => [:first_name, :last_name]).should == [["user_1", "Doe"]]
+            User.a_limiter.get_export_data(:only => [:first_name, :last_name]).should == [["user_1", "Doe"]]
           end
 
           it "should allow a scope to be sent" do
-            User.get_export_data(:columns => [:first_name, :last_name], :scopes => ['a_limiter']).should == [["user_1", "Doe"]]
+            User.get_export_data(:only => [:first_name, :last_name], :scopes => ['a_limiter']).should == [["user_1", "Doe"]]
           end
 
           it "should allow multiple scopes to be sent" do
-            User.get_export_data(:columns =>[:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["user_2", "Doe"]]
+            User.get_export_data(:only =>[:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["user_2", "Doe"]]
           end
 
           it "should create order array of arrays of ordered column data by the options given" do
-            User.get_export_data(:columns => [:first_name, :last_name], :order => " ID DESC").should == [["user_2", "Doe"], ["user_1", "Doe"]]
+            User.get_export_data(:only => [:first_name, :last_name], :order => " ID DESC").should == [["user_2", "Doe"], ["user_1", "Doe"]]
 
-            User.get_export_data(:columns => [:first_name, :last_name], :conditions => {:first_name => "user_1"}).should == [["user_1", "Doe"]]
+            User.get_export_data(:only => [:first_name, :last_name], :conditions => {:first_name => "user_1"}).should == [["user_1", "Doe"]]
           end
 
         end
