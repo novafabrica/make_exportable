@@ -140,8 +140,10 @@ module MakeExportable #:nodoc:
     # Example:  User.to_xml_export(:columns => [:first_name, :last_name, :username])
     #
     def to_export(format, options={})
+      #Simple fix till detangle we are having options merge twice because of !
+      clone_options = options.clone
       data_set = self.get_export_data(options)
-      return self.create_report(format, data_set, options)
+      return self.create_report(format, data_set, clone_options)
     end
 
     # <tt>get_export_data</tt> is a class method that finds all objects of a given
@@ -200,8 +202,7 @@ module MakeExportable #:nodoc:
       # remove any invalid options
       options.slice!(:only, :except, :headers)
       # merge with default options
-      options.reverse_merge!(exportable_options)
-
+      options.reverse_merge!(exportable_options)      
       if only_options = options.delete(:only)
         options[:columns] = Array.wrap(only_options).map {|i| i.to_sym}
       end
