@@ -156,6 +156,11 @@ module MakeExportable #:nodoc:
     #   #> [['John', 'Doe', 'johndoe'], ['Joe', 'Smith', 'jsmith']]
     #
     def get_export_data(options={})
+      # remove any invalid options
+      valid_options = [:only, :except, :scopes, :conditions, :order, :include,
+                       :group, :having, :limit, :offset, :joins]
+      options.slice!(*valid_options)
+      # merge with default options
       options.reverse_merge!(exportable_options)
 
       if only_options = options.delete(:only)
@@ -191,17 +196,24 @@ module MakeExportable #:nodoc:
     # which will be used as headers for the columns in the data_set.
     def create_report(format, data_set=[], options={})
       validate_export_format(format)
+
+      # remove any invalid options
+      options.slice!(:only, :except, :headers)
+      # merge with default options
       options.reverse_merge!(exportable_options)
+
       if only_options = options.delete(:only)
         options[:columns] = Array.wrap(only_options).map {|i| i.to_sym}
       end
       if except_options = options.delete(:except)
         options[:columns] = options[:columns] - Array.wrap(except_options).map {|i| i.to_sym}
       end
-      headers = options[:headers] || options[:columns].map(&:to_s)
-      validate_data_lengths(data_set, headers)
+      options[:headers] ||= options[:columns].map(&:to_s)
+
+      validate_data_lengths(data_set, options[:headers])
+      
       format_class = MakeExportable.exportable_formats[format.to_sym]
-      formater = format_class.new(data_set, headers)
+      formater = format_class.new(data_set, options[:headers])
       return formater.generate, formater.mime_type
     end
 
