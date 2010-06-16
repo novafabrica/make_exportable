@@ -25,7 +25,7 @@ module MakeExportable #:nodoc:
     def generate
       generate_header_option(data_headers)
       @@csv_type.generate do |csv|
-        csv << data_headers.map {|h| sanitize_and_titleize(h)} unless data_headers.blank?
+        csv << data_headers.map {|h| sanitize(h.humanize.titleize)} unless data_headers.blank?
         data_set.each {|row| csv << row }
       end
     end

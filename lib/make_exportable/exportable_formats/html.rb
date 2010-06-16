@@ -19,7 +19,7 @@ module MakeExportable #:nodoc:
       output = "<table>\n"
       unless data_headers.blank?
         output << "\t<tr>\n"
-        output << data_headers.map {|h| "\t\t<th>#{sanitize_and_titleize(h)}</th>\n" }.join
+        output << data_headers.map {|h| "\t\t<th>#{sanitize(h.humanize.titleize)}</th>\n" }.join
         output << "\t</tr>\n"
       end
       data_set.each do |row|

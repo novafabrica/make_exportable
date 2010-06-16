@@ -18,7 +18,7 @@ module MakeExportable #:nodoc:
       generate_header_option(data_headers)
       output = ""
       unless data_headers.blank?
-        output << data_headers.map {|h| sanitize_and_titleize(h) }.join("\t")
+        output << data_headers.map {|h| sanitize(h.humanize.titleize) }.join("\t")
       end
       output << "\n" unless output.blank?
       data_set.each do |row|

@@ -24,10 +24,6 @@ module MakeExportable #:nodoc:
       value
     end
 
-    def sanitize_and_titleize(value)
-      value.humanize.titleize
-    end
-
     def generate_header_option(data_headers=[])
       self.mime_type += self.data_headers.empty? ? " header=absent" : " header=present"
     end
