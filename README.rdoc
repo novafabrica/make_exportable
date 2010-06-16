@@ -137,6 +137,35 @@ If you just have some data you want to export in the right format, MakeExportabl
 Just pass in the format and an ordered array of rows for the data set.  You can also pass in an array of headers as :headers in the options hash.  Remember the row size and the header size need to be the same. 
 
 
+==Which Classes and Formats Can Be Exported
+
+MakeExportable keeps a hash of classes that have been enabled as being exportable. The keys of this hash provide an easy reference if you need to know which classes are supported.  You can also query a class directly using <em>exportable?</em>.
+
+  MakeExportable.exportable_classes
+  # => {"Customer" => Customer, "Product" => Product, "Order" => Order}
+  MakeExportable.exportable_classes.keys
+  # => ["Customer", "Product", "Order"]
+  MakeExportable.exportable_classes.include?("Customer")
+  # => true
+  Customer.exportable?
+  # => true
+  LineItem.exportable?
+  # => false
+
+Note that this list will only include classes which have been loaded.  In production mode that will be all classes, but development mode lazy-loads classes as they are needed.  If you need a full list, you can ask Rails to load all classes so they will all "register" themselves with MakeExportable.
+
+  if Rails.env == 'development'
+    Rails::Initializer.run(:load_application_classes)
+  end
+
+MakeExportable also maintains a hash of the available export formats.  The keys of this hash are an array of symbols for all supported formats.
+
+  MakeExportable.exportable_formats
+  # => { :csv => MakeExportable::CSV, :xls => MakeExportable::Excel, :html => MakeExportable::HTML, :json => MakeExportable::JSON, :tsv => MakeExportable::TSV, :xml => MakeExportable::XML }
+  MakeExportable.exportable_formats.keys
+  # => [:csv, :xls, :html, :json, :tsv, :xml]
+
+
 ==Info
   
 Author: Kevin Skoglund & Matthew Bergman, Nova Fabrica, Inc.
