@@ -52,6 +52,9 @@ module MakeExportable #:nodoc:
     #   end
     #
     def make_exportable(options={})
+      # TODO: Should this class be private?  So you can't simple call: Customer.make_exportable
+      #       How do other "acts_as_*"-style plugins do it?
+      
       # register the class as exportable
       MakeExportable.exportable_classes[self.class_name] = self
 
@@ -76,6 +79,7 @@ module MakeExportable #:nodoc:
       # remove columns using the :only and :except options
       options[:columns] = column_names.map(&:to_sym)
       if only_options = options.delete(:only)
+        # TODO: remove any invalid attributes/methods?
         options[:columns] = Array.wrap(only_options).map(&:to_sym)
       elsif except_options = options.delete(:except)
         options[:columns] = options[:columns] - Array.wrap(except_options).map(&:to_sym)
