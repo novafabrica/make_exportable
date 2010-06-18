@@ -9,5 +9,4 @@ end
 group :test do
   gem 'rspec'
   gem 'sqlite3-ruby', :require => 'sqlite3'
-  gem 'rcov'
 end

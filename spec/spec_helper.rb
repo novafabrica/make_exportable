@@ -20,7 +20,7 @@ rescue Bundler::GemNotFound
     "Did you run `bundle install`?"
 end
 
-Bundler.require
+Bundler.require(:default, :test)
 
 require File.expand_path('../../lib/make_exportable', __FILE__)
 Date::DATE_FORMATS[:default] = '%d/%m/%Y'

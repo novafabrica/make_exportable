@@ -25,7 +25,7 @@ module MakeExportable #:nodoc:
     end
 
     def generate_header_option(data_headers=[])
-      self.mime_type += self.data_headers.empty? ? " header=absent" : " header=present"
+      self.mime_type += (self.data_headers.blank? || data_headers === false) ? " header=absent" : " header=present"
     end
 
   end

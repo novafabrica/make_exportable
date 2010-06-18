@@ -35,3 +35,8 @@ class Post < ActiveRecord::Base
 
 end
 
+class Unexportable < ActiveRecord::Base
+
+  belongs_to :user
+
+end
