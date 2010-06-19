@@ -279,22 +279,73 @@ describe "Make Exportable" do
         end
 
         describe ":as option" do
-          it "should not appear in exportable_options"
-          it "should subtract from all supported formats saved in exportable_options[:formats]"
-          it "should allow format names to be either strings or symbols"
-          it "should allow a single format name or an array of names" # Array.wrap
-          it "should ignore formats not in the supported formats"
-          it "should raise an error if only unsupported formats are passed in"
+
+          it "should not appear in exportable_options" do
+
+            class Post < ActiveRecord::Base
+              make_exportable :as => [:csv, "xml"]
+            end
+
+            Post.exportable_options.include?(:as).should be_false
+
+          end
+
+          it "should allow format names to be either strings or symbols" do
+            class Post < ActiveRecord::Base
+              make_exportable :as => [:csv, "xml"]
+            end
+
+            Post.exportable_options[:formats].map(&:to_s).sort.should == ["csv", "xml"]
+
+          end
+
+          it "should allow a single format name or an array of names" do
+            class Post < ActiveRecord::Base
+              make_exportable :as => [:csv, "xml"]
+            end
+
+            Post.exportable_options[:formats].map(&:to_s).sort.should == ["csv", "xml"]
+
+            class Post < ActiveRecord::Base
+              make_exportable :as => [:json]
+            end
+
+            Post.exportable_options[:formats].should == [:json]
+
+          end
+
+          it "should ignore formats not in the supported formats" do
+            class Post < ActiveRecord::Base
+              make_exportable :as => [:csv, "unsupported"]
+            end
+            Post.exportable_options[:formats].should == [:csv]
+          end
+
+          it "should raise an error if only unsupported formats are passed in" do
+            lambda do
+              class Post < ActiveRecord::Base
+                make_exportable :as => "unsupported"
+              end
+            end.should raise_error(MakeExportable::FormatNotFound)
+
+          end
         end
 
         describe ":scopes option" do
-          it "should be saved unchanged in exportable_options[:scopes]"
+          it "should be saved unchanged in exportable_options[:scopes]" do
+            Post.class_eval("make_exportable :scopes => [:scope1, :scope2]")
+            Post.exportable_options[:scopes].should == [:scope1, :scope2]
+
+          end
         end
 
         describe "finder options" do
 
           [:conditions, :order, :include, :group, :having, :limit, :offset, :joins].each do |opt|
-            it "should save :#{opt} unchanged in exportable_options[:#{opt}]"
+            it "should save :#{opt} unchanged in exportable_options[:#{opt}]" do
+              Post.class_eval("make_exportable :#{opt} => 'accecpts anything trusting the user'")
+              Post.exportable_options[opt.to_sym].should == "accecpts anything trusting the user"              
+            end
           end
 
         end
@@ -322,9 +373,13 @@ describe "Make Exportable" do
           User.exportable?.should be_true
         end
 
-        it "should be true when the argument value is an allowed format for this class"
+        it "should be true when the argument value is an allowed format for this class" do
+          User.exportable?("csv").should be_true
+        end
 
-        it "should be false when the argument value is not an allowed format for this class"
+        it "should be false when the argument value is not an allowed format for this class" do
+          User.exportable?("unsupported").should be_false
+        end
 
       end
 
@@ -443,8 +498,6 @@ describe "Make Exportable" do
 
         end
 
-        # TODO: test :headers => true/false/['x', 'y', 'z']
-        # That's it--most everything has been moved out of to_export
       end
 
       describe "get_export_data" do
@@ -455,8 +508,16 @@ describe "Make Exportable" do
         #   (essentially testing :map_export_data)
         # Some are already below but just need to be organized into finding / mapping.
 
+
         it "should create order array of arrays of ordered column data" do
           User.get_export_data(:only => [:first_name, :last_name]).should == [["first_name", "last_name"], ["user_1", "Doe"], ["user_2", "Doe"]]
+        end
+        
+        #This is extremely edge case
+        it "should raise an error if no columns are passed" do
+          lambda do
+            User.nothing.get_export_data(:except =>["id", "first_name", "last_name", "password", "email", "is_admin", "created_at", "updated_at"])
+          end.should raise_error(MakeExportable::ExportFault)
         end
 
         it "should chainable on named_scopes" do
@@ -485,9 +546,6 @@ describe "Make Exportable" do
 
       describe "create_report" do
 
-        # TODO: test :headers => true/false/['x', 'y', 'z']
-        # TODO: test that different format classes can be selected to return different results
-
         it "should raise an FormatNotFound if the format is not supported" do
           lambda do
             User.create_report("NONSUPPORTED", "")
@@ -498,9 +556,17 @@ describe "Make Exportable" do
           User.create_report("csv", [[ "data", 'lovely data'],["", "more lovely data"]], :headers => ["Title", "Another Title"]).should == ["Title,Another Title\ndata,lovely data\n\"\",more lovely data\n", "text/csv; charset=utf-8; header=present"]
         end
 
+        it 'should export array of arrays of rows in the specified format if header is set to true with header set as present' do
+          User.create_report("csv", [["Title", "Another Title"],[ "data", 'lovely data'],["", "more lovely data"]], :headers => true).should == ["Title,Another Title\ndata,lovely data\n\"\",more lovely data\n", "text/csv; charset=utf-8; header=present"]
+        end
+
+        it 'should export array of arrays of rows in the specified format if header is set to false' do
+          User.create_report("csv", [[ "data", 'lovely data'],["", "more lovely data"]], :headers => false).should == ["data,lovely data\n\"\",more lovely data\n", "text/csv; charset=utf-8; header=absent"]
+        end
+
         it "should raise an ExportFault if the datasets are not all the same size" do
           lambda do
-            User.create_report("csv", [[ "data", 'lovely data'],["more lovely data"]], :headers =>["Title", "Another Title"])
+            User.create_report("xml", [[ "data", 'lovely data'],["more lovely data"]], :headers =>["Title", "Another Title"])
           end.should raise_error(MakeExportable::ExportFault)
         end
 

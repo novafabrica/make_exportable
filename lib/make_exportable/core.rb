@@ -184,6 +184,7 @@ module MakeExportable #:nodoc:
       validate_export_data_lengths(data_set, options[:headers])
       
       # TODO: Add support in all formats classes for :headers == false
+      # MB JSON has no such thing as a header.
       format_class = MakeExportable.exportable_formats[format.to_sym]
       formater = format_class.new(data_set, options[:headers])
       return formater.generate, formater.mime_type
@@ -251,8 +252,9 @@ module MakeExportable #:nodoc:
         else
           options[:columns] = exportable_options[:columns]
         end
-        # TODO: validate_columns_not_empty
-
+        if options[:columns].empty?
+          raise MakeExportable::ExportFault.new("You are not exporting anything")
+        end
         # TODO: Go ahead and humanize/titleize the column names here
         headers = options[:columns].map(&:to_s)
         rows = collection.map do |item|
