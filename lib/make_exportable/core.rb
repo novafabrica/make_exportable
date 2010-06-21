@@ -14,6 +14,14 @@ module MakeExportable #:nodoc:
 
   module ActiveRecordBaseMethods
 
+    # <tt>exportable?</tt> returns false for all ActiveRecord classes
+    # until <tt>make_exportable</tt> has been called on them.
+    def exportable?(format=nil)
+      return false
+    end
+
+    protected
+
     # <tt>make_exportable</tt> is an ActiveRecord method that, when called, add 
     # methods to a particular class to make exporting data from that class easier.
     #
@@ -52,9 +60,6 @@ module MakeExportable #:nodoc:
     #   end
     #
     def make_exportable(options={})
-      # TODO: Should this class be private?  So you can't simple call: Customer.make_exportable
-      #       How do other "acts_as_*"-style plugins do it?
-      
       # register the class as exportable
       MakeExportable.exportable_classes[self.class_name] = self
 
@@ -81,7 +86,8 @@ module MakeExportable #:nodoc:
       if only_options = options.delete(:only)
         # TODO: remove any invalid attributes/methods?
         options[:columns] = Array.wrap(only_options).map(&:to_sym)
-      elsif except_options = options.delete(:except)
+      end
+      if except_options = options.delete(:except)
         options[:columns] = options[:columns] - Array.wrap(except_options).map(&:to_sym)
       end
 
@@ -94,12 +100,6 @@ module MakeExportable #:nodoc:
       extend MakeExportable::ClassMethods
       include MakeExportable::InstanceMethods
 
-    end
-
-    # <tt>exportable?</tt> returns false for all ActiveRecord classes
-    # until <tt>make_exportable</tt> has been called on them.
-    def exportable?(format=nil)
-      return false
     end
 
   end

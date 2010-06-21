@@ -11,14 +11,12 @@ describe "Make Exportable" do
     # For simply having MakeExportable loaded as a gem/plugin
     describe "mattr_accessor :exportable_classes" do
 
-      it "should begin as an empty hash" do
+      it "should be a hash" do
         MakeExportable.exportable_classes.class.should == Hash
-        MakeExportable.exportable_classes.should == {}
       end
 
       it "should be readable and writable" do
         MakeExportable.exportable_classes[:testkey] = 'testvalue'
-        MakeExportable.exportable_classes.should == {:testkey => 'testvalue'}
         MakeExportable.exportable_classes[:testkey].should == 'testvalue'
         MakeExportable.exportable_classes.delete(:testkey)
       end
@@ -59,7 +57,15 @@ describe "Make Exportable" do
 
     describe "extenstions to ActiveRecord's class methods" do
 
-      it "should include MakeExportable's ActiveRecordBaseMethods"
+      it "should include MakeExportable's ActiveRecordBaseMethods" do
+        if ActiveRecord::VERSION::MAJOR >= 3
+          ActiveRecord::Base.methods.include?(:exportable?).should be_true
+          ActiveRecord::Base.methods.include?(:make_exportable).should be_true
+        else
+          ActiveRecord::Base.methods.include?('exportable?').should be_true
+          ActiveRecord::Base.methods.include?('make_exportable').should be_true
+        end
+      end
 
     end
 
@@ -74,7 +80,7 @@ describe "Make Exportable" do
       end
 
       it "should be included in MakeExportable.exportable_tables" do
-        MakeExportable.exportable_classes.should == {'User' => User}
+        MakeExportable.exportable_classes['User'].should == User
       end
 
       it "should have MakeExportable's ClassMethods" do
@@ -169,7 +175,6 @@ describe "Make Exportable" do
           User.exportable_options[:columns].should == [:id, :first_name, :last_name, :password, :email, :is_admin, :created_at, :updated_at]
         end
 
-        #Ruby 1.9.2 dynamically loads them in a different order
         it "should set :formats to all supported formats" do
           User.exportable_options[:formats].map(&:to_s).sort.should == ["csv", "html", "json", "tsv", "xls", "xml"]
         end
@@ -180,45 +185,38 @@ describe "Make Exportable" do
 
       end
 
-      # TODO: add tests for calling make_exportable with options
       describe "passing in options" do
 
-        # i.e. they don't make it to exportable_options
         it "should toss out invalid options" do
 
           class Post < ActiveRecord::Base
             make_exportable :nonsense => "this should not be included", :offset => 20
           end
 
+          # valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
+          #                  :group, :having, :limit, :offset, :joins]
           Post.exportable_options.include?(:nonsense).should be_false
           Post.exportable_options.include?(:offset).should be_true
-
         end
-        # valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
-        #                  :group, :having, :limit, :offset, :joins]
 
         describe ":only/:except options" do
-          # same for both :only and :except
-          it "should not appear in exportable_options" do
 
+          it "should not appear in exportable_options" do
+            # these get removed and converted into :columns
             class Post < ActiveRecord::Base
-              make_exportable :nonsense => "this should not be included", :offset => 20
+              make_exportable :only => [:this, :that, :another], :except => [:title]
             end
             Post.exportable_options.include?(:only).should be_false
             Post.exportable_options.include?(:except).should be_false
-
           end
 
           it "should allow column names to be either strings or symbols" do
-
             class Post < ActiveRecord::Base
               make_exportable :only => ["full_name", :symbol_method]
             end
             Post.exportable_options[:columns].should == [:full_name, :symbol_method]
-
           end
 
-          # Array.wrap
           it "should allow a single column name or an array of names" do
             class Post < ActiveRecord::Base
               make_exportable :only => "full_name"
@@ -247,12 +245,10 @@ describe "Make Exportable" do
           end
 
           # unless we add a check for this
-          it "should not try to catch bogus attribute/method names"   do
-
+          it "should not try to catch bogus attribute/method names" do
             class Post < ActiveRecord::Base
               make_exportable :only => ["full_name", "another_method"]
             end
-
             Post.exportable_options[:columns].should == [:full_name, :another_method]
           end
 
@@ -266,13 +262,10 @@ describe "Make Exportable" do
             Post.exportable_options[:columns].should == [:id, :title, :content, :approved]
           end
 
-
           it "should ignore bogus attribute/method names" do
-
             class Post < ActiveRecord::Base
               make_exportable :except => [:created_at, :updated_at, :bogus]
             end
-
             Post.exportable_options[:columns].should == [:id, :title, :content, :approved]
           end
 
@@ -281,37 +274,24 @@ describe "Make Exportable" do
         describe ":as option" do
 
           it "should not appear in exportable_options" do
-
             class Post < ActiveRecord::Base
               make_exportable :as => [:csv, "xml"]
             end
-
             Post.exportable_options.include?(:as).should be_false
-
           end
 
           it "should allow format names to be either strings or symbols" do
             class Post < ActiveRecord::Base
               make_exportable :as => [:csv, "xml"]
             end
-
             Post.exportable_options[:formats].map(&:to_s).sort.should == ["csv", "xml"]
-
           end
 
           it "should allow a single format name or an array of names" do
             class Post < ActiveRecord::Base
-              make_exportable :as => [:csv, "xml"]
+              make_exportable :as => :json
             end
-
-            Post.exportable_options[:formats].map(&:to_s).sort.should == ["csv", "xml"]
-
-            class Post < ActiveRecord::Base
-              make_exportable :as => [:json]
-            end
-
             Post.exportable_options[:formats].should == [:json]
-
           end
 
           it "should ignore formats not in the supported formats" do
@@ -327,7 +307,6 @@ describe "Make Exportable" do
                 make_exportable :as => "unsupported"
               end
             end.should raise_error(MakeExportable::FormatNotFound)
-
           end
         end
 
@@ -335,20 +314,18 @@ describe "Make Exportable" do
           it "should be saved unchanged in exportable_options[:scopes]" do
             Post.class_eval("make_exportable :scopes => [:scope1, :scope2]")
             Post.exportable_options[:scopes].should == [:scope1, :scope2]
-
           end
         end
 
         describe "finder options" do
-
           [:conditions, :order, :include, :group, :having, :limit, :offset, :joins].each do |opt|
             it "should save :#{opt} unchanged in exportable_options[:#{opt}]" do
-              Post.class_eval("make_exportable :#{opt} => 'accecpts anything trusting the user'")
-              Post.exportable_options[opt.to_sym].should == "accecpts anything trusting the user"              
+              Post.class_eval("make_exportable :#{opt} => 'accepts anything trusting the user'")
+              Post.exportable_options[opt].should == "accepts anything trusting the user"              
             end
           end
-
         end
+
       end
 
     end
@@ -365,6 +342,7 @@ describe "Make Exportable" do
       end
 
       describe "exportable?" do
+
         it "should be false for regular ActiveRecord classes" do
           Unexportable.exportable?.should be_false
         end
@@ -385,163 +363,79 @@ describe "Make Exportable" do
 
       describe "to_export" do
 
-        # TODO: Column-specifying tests should move to get_export_data
-        context "with explicit columns given" do
-
-          context "csv format" do
-
-            it "should export the columns as csv" do
-              User.to_export( "csv", :only => [:first_name, "is_admin"]).should ==  ["First Name,Is Admin\nuser_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=present"]
-            end
-
-            it "should export the columns as csv and detect that there is no header" do
-              User.to_export( "csv", :only => [:first_name, "is_admin"], :headers => false).should ==  ["user_1,false\nuser_2,false\n", "text/csv; charset=utf-8; header=absent"]
-            end
-
-          end
-
-          context "excel format" do
-
-            it "should export the columns as xls" do
-              User.to_export( "xls", :only =>  [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
-            end
-
-            it "should export the columns as xls and detect no header" do
-              User.to_export( "xls", :only =>  [:first_name, "is_admin"], :headers => false).should == ["<table>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=absent"]
-            end
-
-          end
-
-          context "tsv format" do
-
-            it "should export the columns as tsv" do
-              User.to_export( "tsv", :only => [:first_name, "is_admin"]).should == ["First Name\tIs Admin\nuser_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=present"]
-            end
-
-            it "should export the columns as tsv  and detect no header" do
-              User.to_export( "tsv", :only => [:first_name, "is_admin"], :headers => false).should == ["user_1\tfalse\nuser_2\tfalse\n", "text/tab-separated-values; charset=utf-8; header=absent"]
-            end
-
-          end
-
-          context "html format" do
-
-            it "should export the columns as html" do
-              User.to_export( "html", :only => [:first_name, "is_admin"]).should == ["<table>\n\t<tr>\n\t\t<th>First Name</th>\n\t\t<th>Is Admin</th>\n\t</tr>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
-            end
-
-            it "should export the columns as html and detect no header" do
-              User.to_export( "html", :only => [:first_name, "is_admin"], :headers => false).should == ["<table>\n\t<tr>\n\t\t<td>user_1</td>\n\t\t<td>false</td>\n\t</tr>\n\t<tr>\n\t\t<td>user_2</td>\n\t\t<td>false</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=absent"]
-            end
-
-          end
-
-          context "xml format" do
-
-            it "should export the columns as xml" do
-              User.to_export( "xml", :only => [:first_name, "is_admin"]).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<records>\n\t<record>\n\t\t<first-name>user_1</first-name>\n\t\t<is-admin>false</is-admin>\n\t</record>\n\t<record>\n\t\t<first-name>user_2</first-name>\n\t\t<is-admin>false</is-admin>\n\t</record>\n</records>\n", "application/xml; header=present"]
-            end
-
-            it "should export the columns as xml and detect no header" do
-              User.to_export( "xml", :only => [:first_name, "is_admin"], :headers => false).should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<records>\n\t<record>\n\t\t<attribute_0>user_1</attribute_0>\n\t\t<attribute_1>false</attribute_1>\n\t</record>\n\t<record>\n\t\t<attribute_0>user_2</attribute_0>\n\t\t<attribute_1>false</attribute_1>\n\t</record>\n</records>\n", "application/xml; header=absent"]
-            end
-
-          end
-
-          context "json format" do
-
-            #TODO figure out a way to test more then one variable. Because it's a hash converted to a string
-            it "should export the columns as json" do
-              User.to_export( "json", :only => [:first_name]).should ==["[{\"first_name\":\"user_1\"},{\"first_name\":\"user_2\"}]", "application/json; charset=utf-8;"]
-            end
-
-          end
-
-          if ActiveRecord::VERSION::MAJOR < 3
-
-            #We really could test this one forever.
-            it "should export the columns designated by the options given" do
-              User.to_export( "csv", :only => [:first_name, "is_admin"],  :conditions => {:first_name => "user_1"}).should ==["First Name,Is Admin\nuser_1,false\n", "text/csv; charset=utf-8; header=present"]
-            end
-
-          end
-
-        end
-
-        context "default columns" do
-
-          it "should export the columns as csv" do
-            User.to_export( "csv").should == ["Id,First Name,Last Name,Password,Email,Is Admin,Created At,Updated At\n1,user_1,Doe,\"\",\"\",false,Wednesday December 31 1969 at 07:00PM,Wednesday December 31 1969 at 07:00PM\n2,user_2,Doe,\"\",\"\",false,Wednesday December 31 1969 at 07:00PM,Wednesday December 31 1969 at 07:00PM\n", "text/csv; charset=utf-8; header=present"]
-          end
-
-          it "should export the columns as xls" do
-            User.to_export( "xls").should == ["<table>\n\t<tr>\n\t\t<th>Id</th>\n\t\t<th>First Name</th>\n\t\t<th>Last Name</th>\n\t\t<th>Password</th>\n\t\t<th>Email</th>\n\t\t<th>Is Admin</th>\n\t\t<th>Created At</th>\n\t\t<th>Updated At</th>\n\t</tr>\n\t<tr>\n\t\t<td>1</td>\n\t\t<td>user_1</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t</tr>\n\t<tr>\n\t\t<td>2</td>\n\t\t<td>user_2</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t</tr>\n</table>\n", "application/vnd.ms-excel; charset=utf-8; header=present"]
-          end
-
-          it "should export the columns as tsv" do
-            User.to_export( "tsv").should == ["Id\tFirst Name\tLast Name\tPassword\tEmail\tIs Admin\tCreated At\tUpdated At\n1\tuser_1\tDoe\t\t\tfalse\tWednesday December 31 1969 at 07:00PM\tWednesday December 31 1969 at 07:00PM\n2\tuser_2\tDoe\t\t\tfalse\tWednesday December 31 1969 at 07:00PM\tWednesday December 31 1969 at 07:00PM\n", "text/tab-separated-values; charset=utf-8; header=present"]
-          end
-
-          it "should export the columns as html" do
-            User.to_export( "html").should == ["<table>\n\t<tr>\n\t\t<th>Id</th>\n\t\t<th>First Name</th>\n\t\t<th>Last Name</th>\n\t\t<th>Password</th>\n\t\t<th>Email</th>\n\t\t<th>Is Admin</th>\n\t\t<th>Created At</th>\n\t\t<th>Updated At</th>\n\t</tr>\n\t<tr>\n\t\t<td>1</td>\n\t\t<td>user_1</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t</tr>\n\t<tr>\n\t\t<td>2</td>\n\t\t<td>user_2</td>\n\t\t<td>Doe</td>\n\t\t<td></td>\n\t\t<td></td>\n\t\t<td>false</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t\t<td>Wednesday December 31 1969 at 07:00PM</td>\n\t</tr>\n</table>\n", "text/html; charset=utf-8; header=present"]
-          end
-
-          it "should export the columns as xml" do
-            User.to_export( "xml").should == ["<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<records>\n\t<record>\n\t\t<id>1</id>\n\t\t<first-name>user_1</first-name>\n\t\t<last-name>Doe</last-name>\n\t\t<password></password>\n\t\t<email></email>\n\t\t<is-admin>false</is-admin>\n\t\t<created-at>Wednesday December 31 1969 at 07:00PM</created-at>\n\t\t<updated-at>Wednesday December 31 1969 at 07:00PM</updated-at>\n\t</record>\n\t<record>\n\t\t<id>2</id>\n\t\t<first-name>user_2</first-name>\n\t\t<last-name>Doe</last-name>\n\t\t<password></password>\n\t\t<email></email>\n\t\t<is-admin>false</is-admin>\n\t\t<created-at>Wednesday December 31 1969 at 07:00PM</created-at>\n\t\t<updated-at>Wednesday December 31 1969 at 07:00PM</updated-at>\n\t</record>\n</records>\n", "application/xml; header=present"]
-          end
-
-          if ActiveRecord::VERSION::MAJOR < 3
-            it "should export the columns designated by the options given" do
-              User.to_export( "csv", :conditions => {:first_name => "user_1"}).should == ["Id,First Name,Last Name,Password,Email,Is Admin,Created At,Updated At\n1,user_1,Doe,\"\",\"\",false,Wednesday December 31 1969 at 07:00PM,Wednesday December 31 1969 at 07:00PM\n", "text/csv; charset=utf-8; header=present"]
-            end
-          end
-
-        end
+        it "should use default headers if no :header option is sent"
+        
+        it "should use :headers option for headers if sent"
+        
+        it "should use no headers if :headers is false"
 
       end
 
       describe "get_export_data" do
 
-        # TODO: test how passed in :scopes and find options are merged and applied
-        #   (essentially testing :find_export_data)
-        # TODO: test how :only/:except are merged and selected
-        #   (essentially testing :map_export_data)
-        # Some are already below but just need to be organized into finding / mapping.
-
-
-        it "should create order array of arrays of ordered column data" do
-          User.get_export_data(:only => [:first_name, :last_name]).should == [["first_name", "last_name"], ["user_1", "Doe"], ["user_2", "Doe"]]
-        end
-        
-        #This is extremely edge case
-        it "should raise an error if no columns are passed" do
-          lambda do
-            User.nothing.get_export_data(:except =>["id", "first_name", "last_name", "password", "email", "is_admin", "created_at", "updated_at"])
-          end.should raise_error(MakeExportable::ExportFault)
-        end
-
-        it "should chainable on named_scopes" do
-          User.a_limiter.get_export_data(:only => [:first_name, :last_name]).should == [["first_name", "last_name"],["user_1", "Doe"]]
-        end
-
-        it "should allow a scope to be sent" do
-          User.get_export_data(:only => [:first_name, :last_name], :scopes => ['a_limiter']).should == [["first_name", "last_name"], ["user_1", "Doe"]]
-        end
-
-        it "should allow multiple scopes to be sent" do
-          User.get_export_data(:only =>[:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["first_name", "last_name"], ["user_2", "Doe"]]
-        end
-
-        if ActiveRecord::VERSION::MAJOR < 3
-
-          it "should create order array of arrays of ordered column data by the options given" do
-            User.get_export_data(:only => [:first_name, :last_name], :order => " ID DESC").should == [["first_name", "last_name"], ["user_2", "Doe"], ["user_1", "Doe"]]
-
-            User.get_export_data(:only => [:first_name, :last_name], :conditions => {:first_name => "user_1"}).should == [["first_name", "last_name"], ["user_1", "Doe"]]
+        context "scopes and find options" do
+          # Test how :scopes and find options are merged and applied
+          # (testing the private method :find_export_data)
+          it "should chainable on named_scopes" do
+            User.a_limiter.get_export_data(:only => [:first_name, :last_name]).should == [["first_name", "last_name"],["user_1", "Doe"]]
           end
 
-        end
+          it "should allow a scope to be sent" do
+            User.get_export_data(:only => [:first_name, :last_name], :scopes => ['a_limiter']).should == [["first_name", "last_name"], ["user_1", "Doe"]]
+          end
 
+          it "should allow multiple scopes to be sent" do
+            User.get_export_data(:only =>[:first_name, :last_name], :scopes => ['a_limiter', "order_by"]).should == [["first_name", "last_name"], ["user_2", "Doe"]]
+          end
+
+          it "should find records using :conditions option" do
+            if ActiveRecord::VERSION::MAJOR < 3
+              User.get_export_data(:only => [:first_name, :last_name], :conditions => {:first_name => "user_1"} ).should == [["first_name", "last_name"], ["user_1", "Doe"]]
+            end
+          end
+
+          it "should sort records using :order option" do
+            if ActiveRecord::VERSION::MAJOR < 3
+              User.get_export_data(:only => [:first_name, :last_name], :order => "id DESC").should == [["first_name", "last_name"], ["user_2", "Doe"], ["user_1", "Doe"]]
+            end
+          end
+
+          it "should limit records using :limit option" do
+            if ActiveRecord::VERSION::MAJOR < 3
+              User.get_export_data(:only => [:first_name, :last_name], :limit => 1, :order => "id ASC" ).should == [["first_name", "last_name"], ["user_1", "Doe"]]
+            end
+          end
+
+          # TODO: Test how :scopes and find options get merged when there are default options
+          
+        end
+        
+        context "column selection" do
+          # Test how :only/:except are merged and selected
+          # (testing the private method :map_export_data)
+          it "should export the default columns by default" do
+            time = User.first.created_at.to_s
+            User.get_export_data().should == [["id", "first_name", "last_name", "password", "email", "is_admin", "created_at", "updated_at"], ["1", "user_1", "Doe", "", "", "false", Time.at(0).to_s, Time.at(0).to_s], ["2", "user_2", "Doe", "", "", "false", Time.at(0).to_s, Time.at(0).to_s]]
+          end
+
+          it "should export only the columns given by :only" do
+            User.get_export_data(:only => [:first_name, :last_name]).should == [["first_name", "last_name"], ["user_1", "Doe"], ["user_2", "Doe"]]
+          end
+
+          it "should export the default columns minus those given by :except" do
+            User.get_export_data(:except => [:id, :created_at, :updated_at, :password, :is_admin]).should ==  [["first_name", "last_name", "email"], ["user_1", "Doe", ""], ["user_2", "Doe", ""]]
+          end
+
+          it "should raise an error if no columns are passed" do
+            lambda do
+              User.nothing.get_export_data(:except =>["id", "first_name", "last_name", "password", "email", "is_admin", "created_at", "updated_at"])
+            end.should raise_error(MakeExportable::ExportFault)
+          end
+
+          # TODO: Test how :only/:except get merged when there are default options
+
+        end
+        
       end
 
       describe "create_report" do
@@ -611,10 +505,6 @@ describe "Make Exportable" do
 
     end
 
-
   end
-
-  # TODO: each format should have a spec file
-  # TODO: MakeExportableHelper should have a spec file
 
 end
