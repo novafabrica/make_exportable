@@ -34,7 +34,6 @@ Gem::Specification.new do |s|
      "lib/make_exportable/make_exportable_helper.rb",
      "lib/make_exportable/version.rb",
      "rails/init.rb",
-     "spec/database.yml",
      "spec/database.yml.sample",
      "spec/make_exportable/formats_spec.rb",
      "spec/make_exportable/make_exportable_helper_spec.rb",
