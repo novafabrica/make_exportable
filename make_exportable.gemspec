@@ -9,9 +9,9 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kevin Skoglund", "Matthew Bergman"]
-  s.date = %q{2010-06-03}
-  s.description = %q{MakeExportable is a Rails Gem/Plugin that makes exporting your model's data effortless. It works in a variety of formats and can filter down what gets exported using ActiveRecord's find method.}
-  s.email = %q{matt@novafabirca.com}
+  s.date = %q{2010-06-19}
+  s.description = %q{MakeExportable is a Rails gem/plugin to assist in exporting application data as CSV, TSV, JSON, HTML, XML or Excel. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns.}
+  s.email = %q{kevin@novafabrica.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
@@ -22,24 +22,34 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "lib/make_exportable.rb",
-     "lib/nova_fabrica/make_exportable.rb",
-     "lib/nova_fabrica/make_exportable_errors.rb",
-     "lib/nova_fabrica/make_exportable_helper.rb",
+     "lib/make_exportable/core.rb",
+     "lib/make_exportable/errors.rb",
+     "lib/make_exportable/exportable_format.rb",
+     "lib/make_exportable/exportable_formats/csv.rb",
+     "lib/make_exportable/exportable_formats/excel.rb",
+     "lib/make_exportable/exportable_formats/html.rb",
+     "lib/make_exportable/exportable_formats/json.rb",
+     "lib/make_exportable/exportable_formats/tsv.rb",
+     "lib/make_exportable/exportable_formats/xml.rb",
+     "lib/make_exportable/make_exportable_helper.rb",
+     "lib/make_exportable/version.rb",
      "rails/init.rb",
      "spec/database.yml",
      "spec/database.yml.sample",
+     "spec/make_exportable/make_exportable_helper_spec.rb",
      "spec/make_exportable/make_exportable_spec.rb",
      "spec/models.rb",
      "spec/schema.rb",
      "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/Fotoverite/make-exportable}
+  s.homepage = %q{http://github.com/novafabrica/make_exportable}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.7}
-  s.summary = %q{Export your model's data effortless}
+  s.summary = %q{Makes any Rails model easily exportable}
   s.test_files = [
-    "spec/make_exportable/make_exportable_spec.rb",
+    "spec/make_exportable/make_exportable_helper_spec.rb",
+     "spec/make_exportable/make_exportable_spec.rb",
      "spec/models.rb",
      "spec/schema.rb",
      "spec/spec_helper.rb"
