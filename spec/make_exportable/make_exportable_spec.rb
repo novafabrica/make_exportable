@@ -492,7 +492,7 @@ describe "Make Exportable" do
           @user.export_attribute('is_admin').should == "I'm not an Admin I'm a monkey"
         end
 
-        # TODO: Would it be better behaviour to raise an error?
+        # TODO: Would it be better behavior to raise an error?
         it "should return an empty string if the attribute doesn't exist" do
           @user.export_attribute('ful_name').should == ""
         end

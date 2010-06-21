@@ -69,7 +69,6 @@ module MakeExportable #:nodoc:
       options.slice!(*valid_options)
 
       # Determine the exportable formats, default to all registered formats
-      # TODO: Add support for :formats option; maybe options[:as] ||= options[:formats]
       options[:formats] = MakeExportable.exportable_formats.keys
       if format_options = options.delete(:as)
         options[:formats] = options[:formats] & Array.wrap(format_options).map(&:to_sym)
@@ -84,7 +83,6 @@ module MakeExportable #:nodoc:
       # remove columns using the :only and :except options
       options[:columns] = column_names.map(&:to_sym)
       if only_options = options.delete(:only)
-        # TODO: remove any invalid attributes/methods?
         options[:columns] = Array.wrap(only_options).map(&:to_sym)
       end
       if except_options = options.delete(:except)
@@ -183,8 +181,6 @@ module MakeExportable #:nodoc:
       validate_export_format(format)
       validate_export_data_lengths(data_set, options[:headers])
       
-      # TODO: Add support in all formats classes for :headers == false
-      # MB JSON has no such thing as a header.
       format_class = MakeExportable.exportable_formats[format.to_sym]
       formater = format_class.new(data_set, options[:headers])
       return formater.generate, formater.mime_type

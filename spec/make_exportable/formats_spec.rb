@@ -72,7 +72,6 @@ describe "Exportable Formats" do
   end
 
   context "json format" do
-    #TODO figure out a way to test more then one variable. Because it's a hash converted to a string
     it "should export the columns as json" do
       User.to_export( "json", :only => [:first_name]).should ==["[{\"first_name\":\"user_1\"},{\"first_name\":\"user_2\"}]", "application/json; charset=utf-8;"]
     end

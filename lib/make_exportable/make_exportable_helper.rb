@@ -1,4 +1,3 @@
-# TODO: These could use improvement
 module MakeExportableHelper
 
   def self.exportable_class_list
