@@ -3,7 +3,7 @@ require "csv"
 require 'fastercsv' if CSV.const_defined?(:Reader)
 
 module MakeExportable #:nodoc:
-  class CSV < ExportableFormat
+  class CSV < ExportableFormat #:nodoc:
 
     cattr_accessor :csv_type
 

@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class TSV < ExportableFormat
+  class TSV < ExportableFormat #:nodoc:
 
     self.reference = :tsv
     self.name      = "TSV"

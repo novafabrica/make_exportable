@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class ExportableFormat
+  class ExportableFormat #:nodoc:
 
     class_inheritable_accessor :reference
     class_inheritable_accessor :name

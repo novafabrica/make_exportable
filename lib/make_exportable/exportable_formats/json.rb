@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class JSON < ExportableFormat
+  class JSON < ExportableFormat #:nodoc:
 
     self.reference = :json
     self.name      = "JSON"
