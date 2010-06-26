@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class HTML < ExportableFormat
+  class HTML < ExportableFormat #:nodoc:
 
     self.reference = :html
     self.name      = 'HTML'

@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class Excel < ExportableFormat
+  class Excel < ExportableFormat #:nodoc:
 
     self.reference = :xls
     self.name      = 'Excel'

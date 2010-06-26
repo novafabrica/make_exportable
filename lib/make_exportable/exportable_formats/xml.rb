@@ -1,5 +1,5 @@
 module MakeExportable #:nodoc:
-  class XML < ExportableFormat
+  class XML < ExportableFormat #:nodoc:
 
     self.reference = :xml
     self.name      = 'XML'
