@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{make_exportable}
-  s.version = "1.0.0"
+  s.version = "1.0.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kevin Skoglund", "Matthew Bergman"]
-  s.date = %q{2010-06-21}
+  s.date = %q{2010-06-26}
   s.description = %q{MakeExportable is a Rails gem/plugin to assist in exporting application data as CSV, TSV, JSON, HTML, XML or Excel. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns.}
   s.email = %q{kevin@novafabrica.com}
   s.extra_rdoc_files = [
@@ -34,6 +34,7 @@ Gem::Specification.new do |s|
      "lib/make_exportable/make_exportable_helper.rb",
      "lib/make_exportable/version.rb",
      "rails/init.rb",
+     "spec/database.yml",
      "spec/database.yml.sample",
      "spec/make_exportable/formats_spec.rb",
      "spec/make_exportable/make_exportable_helper_spec.rb",
