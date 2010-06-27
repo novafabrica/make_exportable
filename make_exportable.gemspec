@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Kevin Skoglund", "Matthew Bergman"]
-  s.date = %q{2010-06-26}
+  s.date = %q{2010-06-27}
   s.description = %q{MakeExportable is a Rails gem/plugin to assist in exporting application data as CSV, TSV, JSON, HTML, XML or Excel. Filter and limit the data exported using ActiveRecord. Export returned values from instance methods as easily as database columns.}
   s.email = %q{kevin@novafabrica.com}
   s.extra_rdoc_files = [
