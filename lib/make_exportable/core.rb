@@ -62,7 +62,7 @@ module MakeExportable #:nodoc:
       def make_exportable(options={})
         return unless self.table_exists?
         # register the class as exportable
-        MakeExportable.exportable_classes[self.class_name] = self
+        MakeExportable.exportable_classes[self.name] = self
 
         # remove any invalid options
         valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,

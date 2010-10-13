@@ -5,3 +5,4 @@
 coverage/*
 spec/database.yml
 .DS_Store
+.rvmrc
