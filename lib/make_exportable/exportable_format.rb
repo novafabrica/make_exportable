@@ -1,8 +1,8 @@
 module MakeExportable #:nodoc:
   class ExportableFormat #:nodoc:
 
-    class_inheritable_accessor :reference
-    class_inheritable_accessor :name
+    class_attribute :reference
+    class_attribute :name
     
     attr_accessor :long
     attr_accessor :mime_type

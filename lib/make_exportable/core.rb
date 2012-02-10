@@ -93,8 +93,8 @@ module MakeExportable #:nodoc:
         options[:scopes] ||= []
 
         # exportable options will be :formats, :columns, :scopes & find options
-        write_inheritable_attribute :exportable_options, options
-        class_inheritable_reader :exportable_options
+        class_attribute :exportable_options
+        self.exportable_options = options
 
         extend MakeExportable::ClassMethods
         include MakeExportable::InstanceMethods
