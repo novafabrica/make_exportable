@@ -7,6 +7,6 @@ group :development do
 end
 
 group :test do
-  gem 'rspec'
+  gem "rspec-rails"
   gem 'sqlite3-ruby', :require => 'sqlite3'
 end
