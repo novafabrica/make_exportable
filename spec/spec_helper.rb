@@ -35,12 +35,10 @@ if File.exists?(database_yml)
   ActiveRecord::Base.establish_connection(active_record_configuration)
   ActiveRecord::Base.logger = Logger.new(File.join(File.dirname(__FILE__), "debug.log"))
 
-  ActiveRecord::Base.silence do
-    ActiveRecord::Migration.verbose = false
+  ActiveRecord::Migration.verbose = false
 
-    load(File.dirname(__FILE__) + '/schema.rb')
-    load(File.dirname(__FILE__) + '/models.rb')
-  end
+  load(File.dirname(__FILE__) + '/schema.rb')
+  load(File.dirname(__FILE__) + '/models.rb')
 
 else
   raise "Please create #{database_yml} first to configure your database. Take a look at: #{database_yml}.sample"

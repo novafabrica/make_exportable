@@ -36,12 +36,12 @@ describe "Make Exportable" do
 
       it "should contain keys for the supported format types" do
         MakeExportable.exportable_formats.should_not be_nil
-        MakeExportable.exportable_formats.key?(:csv ).should be_true
-        MakeExportable.exportable_formats.key?(:xls ).should be_true
-        MakeExportable.exportable_formats.key?(:html).should be_true
-        MakeExportable.exportable_formats.key?(:json).should be_true
-        MakeExportable.exportable_formats.key?(:tsv ).should be_true
-        MakeExportable.exportable_formats.key?(:xml ).should be_true
+        MakeExportable.exportable_formats.key?(:csv ).should be_truthy
+        MakeExportable.exportable_formats.key?(:xls ).should be_truthy
+        MakeExportable.exportable_formats.key?(:html).should be_truthy
+        MakeExportable.exportable_formats.key?(:json).should be_truthy
+        MakeExportable.exportable_formats.key?(:tsv ).should be_truthy
+        MakeExportable.exportable_formats.key?(:xml ).should be_truthy
       end
 
       it "should have the correct format class as a value for each key" do
@@ -59,11 +59,11 @@ describe "Make Exportable" do
 
       it "should include MakeExportable's ActiveRecordBaseMethods" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          ActiveRecord::Base.methods.include?(:exportable?).should be_true
-          ActiveRecord::Base.methods.include?(:make_exportable).should be_true
+          ActiveRecord::Base.methods.include?(:exportable?).should be_truthy
+          ActiveRecord::Base.methods.include?(:make_exportable).should be_truthy
         else
-          ActiveRecord::Base.methods.include?('exportable?').should be_true
-          ActiveRecord::Base.methods.include?('make_exportable').should be_true
+          ActiveRecord::Base.methods.include?('exportable?').should be_truthy
+          ActiveRecord::Base.methods.include?('make_exportable').should be_truthy
         end
       end
 
@@ -85,45 +85,45 @@ describe "Make Exportable" do
 
       it "should have MakeExportable's ClassMethods" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          User.methods.include?(:exportable?).should be_true
-          User.methods.include?(:to_export).should be_true
-          User.methods.include?(:get_export_data).should be_true
-          User.methods.include?(:create_report).should be_true
+          User.methods.include?(:exportable?).should be_truthy
+          User.methods.include?(:to_export).should be_truthy
+          User.methods.include?(:get_export_data).should be_truthy
+          User.methods.include?(:create_report).should be_truthy
         else
-          User.methods.include?("exportable?").should be_true
-          User.methods.include?("to_export").should be_true
-          User.methods.include?("get_export_data").should be_true
-          User.methods.include?("create_report").should be_true
+          User.methods.include?("exportable?").should be_truthy
+          User.methods.include?("to_export").should be_truthy
+          User.methods.include?("get_export_data").should be_truthy
+          User.methods.include?("create_report").should be_truthy
         end
       end
 
       it "should not expose MakeExportable's ClassMethods which are private" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          User.methods.include?(:find_export_data).should be_false
-          User.methods.include?(:map_export_data).should be_false
-          User.methods.include?(:validate_export_format).should be_false
-          User.methods.include?(:validate_export_data_lengths).should be_false
+          User.methods.include?(:find_export_data).should be_falsey
+          User.methods.include?(:map_export_data).should be_falsey
+          User.methods.include?(:validate_export_format).should be_falsey
+          User.methods.include?(:validate_export_data_lengths).should be_falsey
         else
-          User.methods.include?("find_export_data").should be_false
-          User.methods.include?("map_export_data").should be_false
-          User.methods.include?("validate_export_format").should be_false
-          User.methods.include?("validate_export_data_lengths").should be_false
+          User.methods.include?("find_export_data").should be_falsey
+          User.methods.include?("map_export_data").should be_falsey
+          User.methods.include?("validate_export_format").should be_falsey
+          User.methods.include?("validate_export_data_lengths").should be_falsey
         end
       end
 
       it "should have MakeExportable's InstanceMethods" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          User.instance_methods.include?(:export_attribute).should be_true
+          User.instance_methods.include?(:export_attribute).should be_truthy
         else
-          User.instance_methods.include?("export_attribute").should be_true
+          User.instance_methods.include?("export_attribute").should be_truthy
         end
       end
 
       it "should have an inheritable class accessor for exportable_options" do
         if ActiveRecord::VERSION::MAJOR >= 3
-          User.instance_methods.include?(:exportable_options).should be_true
+          User.instance_methods.include?(:exportable_options).should be_truthy
         else
-          User.instance_methods.include?("exportable_options").should be_true
+          User.instance_methods.include?("exportable_options").should be_truthy
         end
       end
 
@@ -195,8 +195,8 @@ describe "Make Exportable" do
 
           # valid_options = [:as, :only, :except, :scopes, :conditions, :order, :include,
           #                  :group, :having, :limit, :offset, :joins]
-          Post.exportable_options.include?(:nonsense).should be_false
-          Post.exportable_options.include?(:offset).should be_true
+          Post.exportable_options.include?(:nonsense).should be_falsey
+          Post.exportable_options.include?(:offset).should be_truthy
         end
 
         describe ":only/:except options" do
@@ -206,8 +206,8 @@ describe "Make Exportable" do
             class Post < ActiveRecord::Base
               make_exportable :only => [:this, :that, :another], :except => [:title]
             end
-            Post.exportable_options.include?(:only).should be_false
-            Post.exportable_options.include?(:except).should be_false
+            Post.exportable_options.include?(:only).should be_falsey
+            Post.exportable_options.include?(:except).should be_falsey
           end
 
           it "should allow column names to be either strings or symbols" do
@@ -277,7 +277,7 @@ describe "Make Exportable" do
             class Post < ActiveRecord::Base
               make_exportable :as => [:csv, "xml"]
             end
-            Post.exportable_options.include?(:as).should be_false
+            Post.exportable_options.include?(:as).should be_falsey
           end
 
           it "should allow format names to be either strings or symbols" do
@@ -344,19 +344,19 @@ describe "Make Exportable" do
       describe "exportable?" do
 
         it "should be false for regular ActiveRecord classes" do
-          Unexportable.exportable?.should be_false
+          Unexportable.exportable?.should be_falsey
         end
 
         it "should be true for classes that call make_exportable" do
-          User.exportable?.should be_true
+          User.exportable?.should be_truthy
         end
 
         it "should be true when the argument value is an allowed format for this class" do
-          User.exportable?("csv").should be_true
+          User.exportable?("csv").should be_truthy
         end
 
         it "should be false when the argument value is not an allowed format for this class" do
-          User.exportable?("unsupported").should be_false
+          User.exportable?("unsupported").should be_falsey
         end
 
       end

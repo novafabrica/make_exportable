@@ -7,7 +7,7 @@ module MakeExportable #:nodoc:
 
     attr_accessor :data_set, :data_headers
 
-    def initialize(data_set, data_headers=[])
+    def initialize(data_set=[], data_headers=[])
       self.long      = "JavaScript Object Notation (JSON)"
       self.mime_type = "application/json; charset=utf-8;"
       self.data_set = data_set

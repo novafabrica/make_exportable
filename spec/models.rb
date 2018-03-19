@@ -20,9 +20,9 @@ class User < ActiveRecord::Base
   end
 
   if ActiveRecord::VERSION::MAJOR >= 3
-    scope :a_limiter, :limit => 1
-    scope :order_by, :order => "ID DESC"
-    scope :nothing, :conditions => {:first_name => "unfound"}
+    scope :a_limiter, -> { limit(1) }
+    scope :order_by,  -> { order("ID DESC")}
+    scope :nothing,  -> {where(first_name: "unfound") }
   else
     named_scope :a_limiter, :limit => 1
     named_scope :order_by, :order => "ID DESC"
